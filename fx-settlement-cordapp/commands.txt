@@ -1,0 +1,22 @@
+# Commands to run
+./gradlew build
+./gradlew deployNodes
+./build/nodes/runnodes
+./gradlew clean build deployNodes
+
+# child projects
+./gradlew :clients:build
+
+./gradlew runPartyAServer  -- web client = 10009 -- debug port 5005
+./gradlew runPartyBServer  -- web client = 10012
+./gradlew runPartyCServer  -- web client = 10015
+
+
+
+run vaultTrack contractStateType: net.corda.samples.obligation.states.IOUState
+flow start ExampleFlow$Initiator iouValue: 50, otherParty: "O=PartyB,L=New York,C=US"
+
+
+
+# Web queries
+http://localhost:10012/api/iou/me
