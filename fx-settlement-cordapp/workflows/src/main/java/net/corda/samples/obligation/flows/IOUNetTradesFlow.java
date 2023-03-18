@@ -36,14 +36,18 @@ public class IOUNetTradesFlow {
     @InitiatingFlow
     @StartableByRPC
     public static class InitiatorFlow extends FlowLogic<SignedTransaction> {
-        private final IOUState state;
-        public InitiatorFlow(IOUState state) {
-            this.state = state;
+        private final Party netAgainstParty;
+        private final Currency currency;
+
+        public InitiatorFlow(Currency currency, Party netAgainstParty) {
+            this.currency = currency;
+            this.netAgainstParty = netAgainstParty;
         }
 
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
+            System.out.println("Currency " + currency + " Party " + netAgainstParty);
             // Code to get all states
             Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
             List<IOUState> validInputStateToSettle = new ArrayList<IOUState>();
@@ -62,39 +66,38 @@ public class IOUNetTradesFlow {
 
             // Step 2. Create a new issue command.
             // Remember that a command is a CommandData object and a list of CompositeKeys
-            final Command<NetTrades> netTradesCommand = new Command<>(
-                    new NetTrades(), state.getParticipants()
-                    .stream().map(AbstractParty::getOwningKey)
-                    .collect(Collectors.toList()));
-
-            // Step 3. Create a new TransactionBuilder object.
-            final TransactionBuilder builder = new TransactionBuilder(notary);
-
-            // Step 4. Add the iou as an output states, as well as a command to the transaction builder.
-            builder.addOutputState(state, IOUContract.IOU_CONTRACT_ID);
-            builder.addCommand(netTradesCommand);
-
-
-            // Step 5. Verify and sign it with our KeyPair.
-            builder.verify(getServiceHub());
-            final SignedTransaction ptx = getServiceHub().signInitialTransaction(builder);
-
-
-            // Step 6. Collect the other party's signature using the SignTransactionFlow.
-            List<Party> otherParties = state.getParticipants()
-                    .stream().map(el -> (Party)el)
-                    .collect(Collectors.toList());
-
-            otherParties.remove(getOurIdentity());
-
-            List<FlowSession> sessions = otherParties
-                    .stream().map(el -> initiateFlow(el))
-                    .collect(Collectors.toList());
-
-            SignedTransaction stx = subFlow(new CollectSignaturesFlow(ptx, sessions));
-
-            // Step 7. Assuming no exceptions, we can now finalise the transaction
-            return subFlow(new FinalityFlow(stx, sessions));
+//            final Command<NetTrades> netTradesCommand = new Command<>(
+//                    new NetTrades(), Collections.emptyList()
+//                    .stream().map(AbstractParty::getOwningKey)
+//                    .collect(Collectors.toList()));
+//
+//            // Step 3. Create a new TransactionBuilder object.
+//            final TransactionBuilder builder = new TransactionBuilder(notary);
+//
+//            // Step 4. Add the iou as an output states, as well as a command to the transaction builder.
+//            builder.addOutputState(null, IOUContract.IOU_CONTRACT_ID);
+//            builder.addCommand(netTradesCommand);
+//
+//
+//            // Step 5. Verify and sign it with our KeyPair.
+//            builder.verify(getServiceHub());
+//            final SignedTransaction ptx = getServiceHub().signInitialTransaction(builder);
+//
+//
+//            // Step 6. Collect the other party's signature using the SignTransactionFlow.
+//            List<Party> otherParties = null;
+//
+//            otherParties.remove(getOurIdentity());
+//
+//            List<FlowSession> sessions = otherParties
+//                    .stream().map(el -> initiateFlow(el))
+//                    .collect(Collectors.toList());
+//
+//            SignedTransaction stx = subFlow(new CollectSignaturesFlow(ptx, sessions));
+//
+//            // Step 7. Assuming no exceptions, we can now finalise the transaction
+//            return subFlow(new FinalityFlow(stx, sessions));
+            return null;
         }
     }
 

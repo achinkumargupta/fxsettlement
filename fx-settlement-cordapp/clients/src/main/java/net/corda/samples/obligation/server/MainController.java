@@ -193,11 +193,9 @@ public class MainController {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
-        // Create a new IOU states using the parameters given.
         try {
-            IOUState state = new IOUState(new Amount<>((long) 0 * 100, Currency.getInstance(currency)), lender, me);
             // Start the IOUNetTradesFlow. We block and waits for the flows to return.
-            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, state).getReturnValue().get();
+            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currency), lender).getReturnValue().get();
             // Return the response.
             return ResponseEntity
                     .status(HttpStatus.CREATED)
