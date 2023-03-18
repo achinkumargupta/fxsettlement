@@ -117,14 +117,10 @@ public class IOUContract implements Contract {
         }
 
         else if (commandData.equals(new Commands.NetTrades())) {
-
             requireThat(require -> {
-
                 require.using("In IOUContract.NetTrades() verification failed.", tx.getInputStates().size() == 10);
                 return null;
-
             });
-
         }
 
         else if (commandData.equals(new Commands.Settle())) {
