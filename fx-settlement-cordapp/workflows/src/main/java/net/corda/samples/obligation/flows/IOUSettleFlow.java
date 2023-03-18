@@ -52,7 +52,6 @@ public class IOUSettleFlow {
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
-
             // 1. Retrieve the IOU State from the vault using LinearStateQueryCriteria
             List<UUID> listOfLinearIds = Arrays.asList(stateLinearId.getId());
             QueryCriteria queryCriteria = new QueryCriteria.LinearStateQueryCriteria(null, listOfLinearIds);

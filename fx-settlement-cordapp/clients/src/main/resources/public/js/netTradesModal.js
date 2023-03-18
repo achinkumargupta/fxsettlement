@@ -20,12 +20,12 @@ angular.module('demoAppModule').controller('netTradesModalCtrl', function($http,
             $uibModalInstance.close();
 
             // We define the IOU creation endpoint.
-            const issueIOUEndpoint =
+            const netTradesEndpoint =
                 apiBaseURL +
-                `issue-iou?amount=0&currency=${currency}&party=${party}`;
+                `net-trades?currency=${currency}&party=${party}`;
 
             // We hit the endpoint to create the IOU and handle success/failure responses.
-            $http.put(issueIOUEndpoint).then(
+            $http.put(netTradesEndpoint).then(
                 (result) => netTradesModal.displayMessage(result),
                 (result) => netTradesModal.displayMessage(result)
             );

@@ -1,8 +1,6 @@
 # Commands to run
-./gradlew build
-./gradlew deployNodes
-./build/nodes/runnodes
 ./gradlew clean build deployNodes
+./build/nodes/runnodes
 
 # child projects
 ./gradlew :clients:build
@@ -14,9 +12,24 @@
 
 
 run vaultTrack contractStateType: net.corda.samples.obligation.states.IOUState
-flow start ExampleFlow$Initiator iouValue: 50, otherParty: "O=PartyB,L=New York,C=US"
+flow start ExampleFlow$Initiator iouValue: 50, otherParty: "O=Credit Suisse,L=London,C=GB"
 
 
 
 # Web queries
 http://localhost:10012/api/iou/me
+
+
+# Unique field
+Instrument, party, counterparty
+
+# Fields
+Time
+valueDate = 2023-01-31
+TradingParty
+CounterPArty
+TradedAssetType EUR
+tradedAmount
+CounterAssetType USD
+CounterAmount
+Side

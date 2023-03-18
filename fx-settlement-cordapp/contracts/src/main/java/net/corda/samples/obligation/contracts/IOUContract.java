@@ -36,6 +36,7 @@ public class IOUContract implements Contract {
         class Issue extends TypeOnlyCommandData implements Commands{}
         class Transfer extends TypeOnlyCommandData implements Commands{}
         class Settle extends TypeOnlyCommandData implements Commands{}
+        class NetTrades extends TypeOnlyCommandData implements Commands{}
     }
     /**
      * The contracts code for the [IOUContract].
@@ -109,6 +110,17 @@ public class IOUContract implements Contract {
                 List<PublicKey> arrayOfSigners = command.getSigners();
                 Set<PublicKey> setOfSigners = new HashSet<PublicKey>(arrayOfSigners);
                 require.using("The borrower, old lender and new lender only must sign an IOU transfer transaction", setOfSigners.equals(listOfParticipantPublicKeys) && setOfSigners.size() == 3);
+                return null;
+
+            });
+
+        }
+
+        else if (commandData.equals(new Commands.NetTrades())) {
+
+            requireThat(require -> {
+
+                require.using("In IOUContract.NetTrades() verification failed.", tx.getInputStates().size() == 10);
                 return null;
 
             });

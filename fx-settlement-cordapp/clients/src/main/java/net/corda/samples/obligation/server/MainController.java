@@ -10,6 +10,7 @@ import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.finance.contracts.asset.Cash;
 import net.corda.samples.obligation.flows.IOUIssueFlow;
+import net.corda.samples.obligation.flows.IOUNetTradesFlow;
 import net.corda.samples.obligation.flows.IOUSettleFlow;
 import net.corda.samples.obligation.flows.IOUTransferFlow;
 import net.corda.samples.obligation.flows.SelfIssueCashFlow;
@@ -185,6 +186,30 @@ public class MainController {
                     .body(e.getMessage());
         }
     }
+
+    @PutMapping(value =  "/net-trades" , produces = TEXT_PLAIN_VALUE )
+    public ResponseEntity<String> netTrades(@RequestParam(value = "currency") String currency,
+                                           @RequestParam(value = "party") String party) throws IllegalArgumentException {
+        // Get party objects for myself and the counterparty.
+        Party me = proxy.nodeInfo().getLegalIdentities().get(0);
+        Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
+        // Create a new IOU states using the parameters given.
+        try {
+            IOUState state = new IOUState(new Amount<>((long) 0 * 100, Currency.getInstance(currency)), lender, me);
+            // Start the IOUNetTradesFlow. We block and waits for the flows to return.
+            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, state).getReturnValue().get();
+            // Return the response.
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body("Transaction id "+ result.getId() +" committed to ledger.\n " + result.getTx().getOutput(0));
+            // For the purposes of this demo app, we do not differentiate by exception type.
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
     @GetMapping(value =  "transfer-iou" , produces =  TEXT_PLAIN_VALUE )
     public ResponseEntity<String> transferIOU(@RequestParam(value = "id") String id,
                                               @RequestParam(value = "party") String party) {
