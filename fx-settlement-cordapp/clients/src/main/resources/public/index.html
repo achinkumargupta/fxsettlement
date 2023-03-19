@@ -309,13 +309,13 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 <div class="row">
     <div class="col-md-1"></div>
     <div class="col-md-10">
-        <div ng-show="!demoApp.ious.length" class="panel panel-primary">
+        <div ng-show="!demoApp.settled_trades.length" class="panel panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">Settled Trades:</h3>
             </div>
             <div class="panel-body">There are no settled trades currently.</div>
         </div>
-        <div ng-show="demoApp.ious.length" class="panel panel-primary">
+        <div ng-show="demoApp.settled_trades.length" class="panel panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">Settled Trades:</h3>
             </div>
@@ -328,24 +328,15 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <th>Amount</th>
                         <th>Paid</th>
                         <th>Id</th>
-                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat="iou in demoApp.ious">
+                    <tr ng-repeat="iou in demoApp.settled_trades">
                         <td class="vert-align">{{iou.lender}}</td>
                         <td class="vert-align">{{iou.borrower}}</td>
                         <td class="vert-align">{{iou.amount}}</td>
                         <td class="vert-align">{{iou.paid}}</td>
                         <td class="vert-align">{{iou.linearId.id}}</td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button ng-click="demoApp.openTransferModal(iou.linearId.id)" type="button" class="btn btn-primary">Transfer
-                                </button>
-                                <button ng-click="demoApp.openSettleModal(iou.linearId.id)" type="button" class="btn btn-primary">Settle
-                                </button>
-                            </div>
-                        </td>
                     </tr>
                     </tbody>
                 </table>

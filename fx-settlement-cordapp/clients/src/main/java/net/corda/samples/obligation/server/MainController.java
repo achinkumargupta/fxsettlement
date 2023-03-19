@@ -15,6 +15,9 @@ import net.corda.samples.obligation.flows.IOUSettleFlow;
 import net.corda.samples.obligation.flows.IOUTransferFlow;
 import net.corda.samples.obligation.flows.SelfIssueCashFlow;
 import net.corda.samples.obligation.states.IOUState;
+import net.corda.core.node.services.Vault;
+import net.corda.core.node.services.vault.QueryCriteria;
+import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -152,6 +155,14 @@ public class MainController {
         // Filter by states type: IOU.
         return proxy.vaultQuery(IOUState.class).getStates();
     }
+
+    @GetMapping(value = "/settled-trades",produces = APPLICATION_JSON_VALUE)
+    public List<StateAndRef<IOUState>> getSettledTrades() {
+        // Filter by states type: IOU.
+        QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+        return proxy.vaultQueryByCriteria(stateStatusCriteria, IOUState.class).getStates();
+    }
+
     @GetMapping(value = "/cash",produces = APPLICATION_JSON_VALUE)
     public List<StateAndRef<Cash.State>> getCash() {
         // Filter by states type: Cash.
