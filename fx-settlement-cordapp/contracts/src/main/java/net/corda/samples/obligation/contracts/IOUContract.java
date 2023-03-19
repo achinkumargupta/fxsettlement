@@ -44,39 +44,7 @@ public class IOUContract implements Contract {
      */
     @Override
     public void verify(LedgerTransaction tx) {
-//        final List<CommandWithParties<Commands>> commands = tx.commandsOfType<ExampleCommands>();
-//        for (CommandWithParties<Commands> command : commands) {
-//        val exampleInputs = tx.inputsOfType<ExampleState>()
-//        val exampleOutputs = tx.outputsOfType<ExampleState>()
-
-//        exampleCommands.forEach { command ->
-//                when (command.value) {
-//            is ExampleCommands.Issue -> {
-//                if (exampleInputs.isNotEmpty()) throw IllegalArgumentException("Issuance should have no inputs.")
-//                if (exampleOutputs.isEmpty()) throw IllegalArgumentException("Issuance should have outputs.")
-//                // TODO: More verification.
-//            }
-//
-//            is ExampleCommands.Transfer -> {
-//                if (exampleInputs.isEmpty()) throw IllegalArgumentException("Transfer should have inputs.")
-//                if (exampleOutputs.isEmpty()) throw IllegalArgumentException("Transfer should have outputs.")
-//                // TODO: More verification.
-//            }
-//
-//            is ExampleCommands.Exit -> {
-//                if (exampleInputs.isEmpty()) throw IllegalArgumentException("Exit should have inputs.")
-//                if (exampleOutputs.isNotEmpty()) throw IllegalArgumentException("Exit should have no outputs.")
-//                // TODO: More verification.
-//            }
-//        }
-//        }
-
         for (Command command : tx.commandsOfType(Commands.class)) {
-//tx.commandsOfType(Commands.class).size()
-            //tx.commandsOfType(Commands.class).get(0).getValue().equals(new Commands.NetTrades())
-            // We can use the requireSingleCommand function to extract command data from transaction.
-
-            //final CommandWithParties<Commands> command = requireSingleCommand(tx.getCommands(), Commands.class);
             final Commands commandData = (Commands) command.getValue();
 
             /**
