@@ -19,6 +19,9 @@ import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
 
 import java.util.*;
+import java.security.PublicKey;
+
+import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
 import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
@@ -51,28 +54,43 @@ public class IOUNetTradesFlow {
             // Code to get all states
             Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
             List<IOUState> validInputStateToSettle = new ArrayList<IOUState>();
+            List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
+            Amount<Currency> totalAmount = new Amount<Currency>(0, currency);
             for (Object stateToSettle : allResults.getStates()) {
                 IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
-                //if (inputStateToSettle)
-
                 System.out.println(inputStateToSettle);
 
+                // Pick the matching input states
+                totalAmount = totalAmount.plus(inputStateToSettle.amount.minus(inputStateToSettle.paid));
+                listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                        .stream().map(AbstractParty::getOwningKey)
+                        .collect(Collectors.toList()));
             }
 
-
+            System.out.println("Total Amount: " + totalAmount);
             // Step 1. Get a reference to the notary service on our network and our key pair.
             /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
             final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
 
             // Step 2. Create a new issue command.
             // Remember that a command is a CommandData object and a list of CompositeKeys
-//            final Command<NetTrades> netTradesCommand = new Command<>(
-//                    new NetTrades(), Collections.emptyList()
-//                    .stream().map(AbstractParty::getOwningKey)
-//                    .collect(Collectors.toList()));
-//
-//            // Step 3. Create a new TransactionBuilder object.
-//            final TransactionBuilder builder = new TransactionBuilder(notary);
+            Command<NetTrades> command = new Command<>(
+                    new NetTrades(),
+                    listOfRequiredSigners.stream().distinct().collect(Collectors.toList())
+            );
+
+            System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
+            // Step 3. Create a new TransactionBuilder object.
+            final TransactionBuilder builder = new TransactionBuilder(notary);
+
+            // Step 4. Check we have enough cash to settle the requested amount.
+            final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), currency);
+            if (cashBalance.getQuantity() < totalAmount.getQuantity()) {
+                throw new IllegalArgumentException("Borrower doesn't have enough cash to settle with the amount specified.");
+            }
+            System.out.println("Cash balance: " + cashBalance);
+
+
 //
 //            // Step 4. Add the iou as an output states, as well as a command to the transaction builder.
 //            builder.addOutputState(null, IOUContract.IOU_CONTRACT_ID);
