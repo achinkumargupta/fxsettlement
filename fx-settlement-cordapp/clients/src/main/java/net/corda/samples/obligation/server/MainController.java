@@ -159,7 +159,10 @@ public class MainController {
     @GetMapping(value = "/settled-trades",produces = APPLICATION_JSON_VALUE)
     public List<StateAndRef<IOUState>> getSettledTrades() {
         // Filter by states type: IOU.
-        QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+        QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.ALL);
+        for (StateAndRef<IOUState> s : proxy.vaultQueryByCriteria(stateStatusCriteria, IOUState.class).getStates()) {
+            System.out.println(s.getState().getData());
+        }
         return proxy.vaultQueryByCriteria(stateStatusCriteria, IOUState.class).getStates();
     }
 
