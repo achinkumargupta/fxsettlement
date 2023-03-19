@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import net.corda.confidential.IdentitySyncFlow;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.crypto.SecureHash;
@@ -17,6 +18,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
+import net.corda.finance.workflows.asset.CashUtils;
 
 import java.util.*;
 import java.security.PublicKey;
@@ -53,7 +55,7 @@ public class IOUNetTradesFlow {
             System.out.println("Currency " + currency + " Party " + netAgainstParty);
             // Code to get all states
             Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
-            List<IOUState> validInputStateToSettle = new ArrayList<IOUState>();
+            List<StateAndRef> validInputStatesToSettle = new ArrayList<StateAndRef>();
             List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
             Amount<Currency> totalAmount = new Amount<Currency>(0, currency);
             for (Object stateToSettle : allResults.getStates()) {
@@ -65,6 +67,7 @@ public class IOUNetTradesFlow {
                             .stream().map(AbstractParty::getOwningKey)
                             .collect(Collectors.toList()));
 
+                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
                     System.out.println("Matched state " + inputStateToSettle.getLender() + " :: " + netAgainstParty.getOwningKey());
                 }
             }
@@ -74,12 +77,10 @@ public class IOUNetTradesFlow {
             /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
             final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
 
-            // Step 2. Create a new issue command.
-            // Remember that a command is a CommandData object and a list of CompositeKeys
-            Command<NetTrades> command = new Command<>(
-                    new NetTrades(),
-                    listOfRequiredSigners.stream().distinct().collect(Collectors.toList())
-            );
+            // Step 2. Check the party running this flows is the borrower.
+            if (validInputStatesToSettle.isEmpty()) {
+                throw new IllegalArgumentException("There are no trades to settle for party " + netAgainstParty);
+            }
 
             System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
             // Step 3. Create a new TransactionBuilder object.
@@ -92,32 +93,35 @@ public class IOUNetTradesFlow {
             }
             System.out.println("Cash balance: " + cashBalance);
 
+            // Step 5. Get some cash from the vault and add a spend to our transaction builder.
+            // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
+            // generateSpend returns all public keys which have to be used to sign transaction
+            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), builder, totalAmount, getOurIdentityAndCert(), netAgainstParty).getSecond();
 
-//
-//            // Step 4. Add the iou as an output states, as well as a command to the transaction builder.
-//            builder.addOutputState(null, IOUContract.IOU_CONTRACT_ID);
-//            builder.addCommand(netTradesCommand);
-//
-//
-//            // Step 5. Verify and sign it with our KeyPair.
-//            builder.verify(getServiceHub());
-//            final SignedTransaction ptx = getServiceHub().signInitialTransaction(builder);
-//
-//
-//            // Step 6. Collect the other party's signature using the SignTransactionFlow.
-//            List<Party> otherParties = null;
-//
-//            otherParties.remove(getOurIdentity());
-//
-//            List<FlowSession> sessions = otherParties
-//                    .stream().map(el -> initiateFlow(el))
-//                    .collect(Collectors.toList());
-//
-//            SignedTransaction stx = subFlow(new CollectSignaturesFlow(ptx, sessions));
-//
-//            // Step 7. Assuming no exceptions, we can now finalise the transaction
-//            return subFlow(new FinalityFlow(stx, sessions));
-            return null;
+            // Step 6. Add the IOU input states and settle command to the transaction builder.
+            for (StateAndRef validInputStateToSettle : validInputStatesToSettle) {
+                Command<NetTrades> command = new Command<>(
+                        new NetTrades(),
+                        listOfRequiredSigners.stream().distinct().collect(Collectors.toList())
+                );
+                builder.addCommand(command);
+                builder.addInputState(validInputStateToSettle);
+            }
+            // Step 8. Verify and sign the transaction.
+            builder.verify(getServiceHub());
+            keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
+            SignedTransaction ptx = getServiceHub().signInitialTransaction(builder, keyList);
+
+            // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
+            FlowSession session = initiateFlow(netAgainstParty);
+            new IdentitySyncFlow.Send(session, ptx.getTx());
+
+            SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
+
+            /* 12. Return the output of the FinalityFlow which sends the transaction to the notary for verification
+             *     and the causes it to be persisted to the vault of appropriate nodes.
+             */
+            return subFlow(new FinalityFlow(fullySignedTransaction, session));
         }
     }
 
@@ -147,17 +151,10 @@ public class IOUNetTradesFlow {
 
                 @Override
                 protected void checkTransaction(SignedTransaction stx) {
-                    requireThat(req -> {
-                        ContractState output = stx.getTx().getOutputs().get(0).getData();
-                        req.using("This must be an IOU transaction", output instanceof IOUState);
-                        return null;
-                    });
                     // Once the transaction has verified, initialize txWeJustSignedID variable.
                     txWeJustSigned = stx.getId();
                 }
             }
-
-            flowSession.getCounterpartyFlowInfo().getFlowVersion();
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker());
