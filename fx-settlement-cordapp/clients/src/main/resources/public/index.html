@@ -42,7 +42,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         <div class="navbar-header">
             <a class="navbar-brand" href="#">{{demoApp.thisNodeOrg}}</a>
         </div>
-        <button ng-click="demoApp.openCreateIOUModal()" type="button" class="btn btn-primary navbar-btn">Create IOU</button>
+        <button ng-click="demoApp.openCreateIOUModal()" type="button" class="btn btn-primary navbar-btn">Record Trade</button>
         <button ng-click="demoApp.openIssueCashModal()" type="button" class="btn btn-primary navbar-btn">Issue Cash</button>
         <button ng-click="demoApp.openNetTradesModal()" type="button" class="btn btn-primary navbar-btn">Net Trades</button>
         <button ng-click="demoApp.refresh()" type="button" class="btn btn-default navbar-btn"><span
@@ -52,7 +52,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <script type="text/ng-template" id="createIOUModal.html">
     <div class="modal-header">
-        <h4 class="modal-title">Add new IOU</h4>
+        <h4 class="modal-title">Record new trade</h4>
     </div>
     <form>
         <div class="modal-body">
@@ -262,13 +262,13 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <div class="col-md-10">
         <div ng-show="!demoApp.ious.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">There are no recorded IOUs</h3>
+                <h3 class="panel-title">Recorded Trades:</h3>
             </div>
-            <div class="panel-body">Use the "Create IOU" button to send an IOU to a peer.</div>
+            <div class="panel-body">There are no recorded trades currently. Use the "Record Trade" button to record a trade on Corda Ledger.</div>
         </div>
         <div ng-show="demoApp.ious.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Recorded IOUs:</h3>
+                <h3 class="panel-title">Recorded Trades:</h3>
             </div>
             <div class="panel-body">
                 <table class="table">
@@ -306,5 +306,44 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     </div>
 </div>
 
+<div class="row">
+    <div class="col-md-1"></div>
+    <div class="col-md-10">
+        <div ng-show="!demoApp.settled_trades.length" class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Settled Trades:</h3>
+            </div>
+            <div class="panel-body">There are no settled trades currently.</div>
+        </div>
+        <div ng-show="demoApp.settled_trades.length" class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Settled Trades:</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Id</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="iou in demoApp.settled_trades">
+                        <td class="vert-align">{{iou.lender}}</td>
+                        <td class="vert-align">{{iou.borrower}}</td>
+                        <td class="vert-align">{{iou.amount}}</td>
+                        <td class="vert-align">{{iou.paid}}</td>
+                        <td class="vert-align">{{iou.linearId.id}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+</div>
 </body>
 </html>

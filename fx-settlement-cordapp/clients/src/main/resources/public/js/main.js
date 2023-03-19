@@ -90,13 +90,17 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
 
     /** Refreshes the front-end. */
     demoApp.refresh = () => {
-        // Update the list of IOUs.
+        // Update the list of trades.
         $http.get(apiBaseURL + "ious").then((response) => demoApp.ious =
             Object.keys(response.data).map((key) => response.data[key].state.data));
 
         // Update the cash balances.
         $http.get(apiBaseURL + "cash-balances").then((response) => demoApp.cashBalances =
             response.data);
+
+        // Update the completed trades.
+        $http.get(apiBaseURL + "settled-trades").then((response) => demoApp.settled_trades =
+                    Object.keys(response.data).map((key) => response.data[key].state.data));
     }
 
     demoApp.refresh();

@@ -18,6 +18,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
+import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria;
 import net.corda.finance.workflows.asset.CashUtils;
 
 import java.util.*;
@@ -52,6 +53,11 @@ public class IOUNetTradesFlow {
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
+            QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+            for ( StateAndRef<IOUState> s : getServiceHub().getVaultService().queryBy(IOUState.class, stateStatusCriteria).getStates()) {
+                System.out.println("CONSUMED Vault" + s);
+            }
+
             System.out.println("Currency " + currency + " Party " + netAgainstParty);
             // Code to get all states
             Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
