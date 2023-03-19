@@ -58,13 +58,15 @@ public class IOUNetTradesFlow {
             Amount<Currency> totalAmount = new Amount<Currency>(0, currency);
             for (Object stateToSettle : allResults.getStates()) {
                 IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
-                System.out.println(inputStateToSettle);
+                if (inputStateToSettle.getLender().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    // Pick the matching input states
+                    totalAmount = totalAmount.plus(inputStateToSettle.amount.minus(inputStateToSettle.paid));
+                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                            .stream().map(AbstractParty::getOwningKey)
+                            .collect(Collectors.toList()));
 
-                // Pick the matching input states
-                totalAmount = totalAmount.plus(inputStateToSettle.amount.minus(inputStateToSettle.paid));
-                listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
-                        .stream().map(AbstractParty::getOwningKey)
-                        .collect(Collectors.toList()));
+                    System.out.println("Matched state " + inputStateToSettle.getLender() + " :: " + netAgainstParty.getOwningKey());
+                }
             }
 
             System.out.println("Total Amount: " + totalAmount);

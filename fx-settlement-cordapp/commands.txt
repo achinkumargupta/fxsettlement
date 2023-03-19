@@ -1,5 +1,5 @@
 # Commands to run
-./gradlew clean build deployNodes
+./gradlew clean build deployNodes -x test
 ./build/nodes/runnodes
 
 # child projects
@@ -11,7 +11,7 @@
 
 # Docker
 cd /Users/achin/Downloads/DLT/fxsettlement/fx-settlement-cordapp/build/nodes
-./gradlew prepareDockerNodes
+./gradlew clean build prepareDockerNodes -x test
 
 run vaultTrack contractStateType: net.corda.samples.obligation.states.IOUState
 flow start ExampleFlow$Initiator iouValue: 50, otherParty: "O=Credit Suisse,L=London,C=GB"
