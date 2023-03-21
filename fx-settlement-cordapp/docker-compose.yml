@@ -12,6 +12,8 @@ services:
       - ./build/nodes/Notary/drivers:/opt/corda/drivers
     ports:
       - 10002:10002
+      - 10003:10003
+      - 10103:10103
     image: corda/corda-zulu-java1.8-4.4:latest
   partya:
     volumes:
@@ -26,6 +28,8 @@ services:
     ports:
       - 10007:10007
       - 10024:2223
+      - 10008:10008
+      - 10108:10108
     image: corda/corda-zulu-java1.8-4.4:latest
   partyb:
     volumes:
@@ -40,6 +44,8 @@ services:
     ports:
       - 10010:10010
       - 10034:2224
+      - 10011:10011
+      - 10111:10111
     image: corda/corda-zulu-java1.8-4.4:latest
   partyc:
     volumes:
@@ -54,4 +60,6 @@ services:
     ports:
       - 10013:10013
       - 10044:2225
+      - 10014:10014
+      - 10114:10114
     image: corda/corda-zulu-java1.8-4.4:latest
