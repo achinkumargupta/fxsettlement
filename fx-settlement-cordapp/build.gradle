@@ -91,7 +91,7 @@ dependencies {
     cordaCompile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     cordaCompile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaCompile "org.slf4j:jul-to-slf4j:$slf4j_version"
-    cordaDriver "net.corda:corda-shell:4.10"
+    //cordaDriver "net.corda:corda-shell:4.10"
 
 }
 
@@ -113,7 +113,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         cordapp project(":workflows")
         cordapp project(":contracts")
 
-	runSchemaMigration = true
+	//runSchemaMigration = true
         cordapp("$corda_release_group:corda-finance-contracts:$corda_release_version")
         cordapp("$corda_release_group:corda-finance-workflows:$corda_release_version")
         cordapp("$corda_release_group:corda-confidential-identities:$corda_release_version")
@@ -162,9 +162,9 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     }
 }
 
-task prepareDockerNodes(type: net.corda.plugins.Dockerform, dependsOn: ['jar']) {
+task prepareDockerNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     // set docker image for each node
-    dockerImage = "corda/corda-zulu-java1.8-4.4"
+    //dockerImage = "corda/corda-zulu-java1.8-4.4"
 
     nodeDefaults {
         projectCordapp {
@@ -214,7 +214,7 @@ task prepareDockerNodes(type: net.corda.plugins.Dockerform, dependsOn: ['jar']) 
         sshdPort 2225
     }
     // This property needs to be outside the node {...} elements
-    dockerImage = "corda/corda-zulu-java1.8-4.8"
+    //dockerImage = "corda/corda-zulu-java1.8-4.8"
 }
 
 task installQuasar(type: Copy) {

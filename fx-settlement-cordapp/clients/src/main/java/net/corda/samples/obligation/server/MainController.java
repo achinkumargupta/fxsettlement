@@ -159,11 +159,31 @@ public class MainController {
     @GetMapping(value = "/settled-trades",produces = APPLICATION_JSON_VALUE)
     public List<StateAndRef<IOUState>> getSettledTrades() {
         // Filter by states type: IOU.
-        QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.ALL);
-        for (StateAndRef<IOUState> s : proxy.vaultQueryByCriteria(stateStatusCriteria, IOUState.class).getStates()) {
-            System.out.println(s.getState().getData());
+        QueryCriteria consumedStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+        List<StateAndRef<IOUState>> consumedStatusTrades =
+                proxy.vaultQueryByCriteria(consumedStatusCriteria, IOUState.class).getStates();
+        List<UniqueIdentifier> settledIds = new ArrayList<UniqueIdentifier>();
+
+        List<StateAndRef<IOUState>> activeTrades = proxy.vaultQuery(IOUState.class).getStates();
+        List<UniqueIdentifier> activeIds = activeTrades.stream()
+                .map(elt -> elt.getState().getData().getLinearId()).collect(Collectors.toList());
+
+        List<StateAndRef<IOUState>> finalSettledTrades = new ArrayList<StateAndRef<IOUState>>();
+        for (StateAndRef<IOUState> s : consumedStatusTrades) {
+            boolean found = false;
+            for (UniqueIdentifier activeOrSettledId : Stream.concat(activeIds.stream(), settledIds.stream())
+                    .collect(Collectors.toList())) {
+                if (s.getState().getData().getLinearId().equals(activeOrSettledId)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                finalSettledTrades.add(s);
+                settledIds.add(s.getState().getData().getLinearId());
+            }
         }
-        return proxy.vaultQueryByCriteria(stateStatusCriteria, IOUState.class).getStates();
+
+        return finalSettledTrades;
     }
 
     @GetMapping(value = "/cash",produces = APPLICATION_JSON_VALUE)
