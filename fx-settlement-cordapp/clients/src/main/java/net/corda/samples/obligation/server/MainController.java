@@ -15,7 +15,9 @@ import net.corda.samples.obligation.flows.IOUSettleFlow;
 import net.corda.samples.obligation.flows.IOUTransferFlow;
 import net.corda.samples.obligation.flows.SelfIssueCashFlow;
 import net.corda.samples.obligation.states.IOUState;
+import net.corda.samples.obligation.states.IOUState.TradeStatus;
 import net.corda.core.node.services.Vault;
+import java.text.SimpleDateFormat;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria;
 import java.time.LocalDateTime;
@@ -198,15 +200,27 @@ public class MainController {
     }
 
     @PutMapping(value =  "/issue-iou" , produces = TEXT_PLAIN_VALUE )
-    public ResponseEntity<String> issueIOU(@RequestParam(value = "amount") int amount,
-                                           @RequestParam(value = "currency") String currency,
-                                           @RequestParam(value = "party") String party) throws IllegalArgumentException {
+    public ResponseEntity<String> issueIOU(@RequestParam(value = "valueDate") String valueDate,
+                                           @RequestParam(value = "counterparty") String counterparty,
+                                           @RequestParam(value = "tradedAmount") int tradedAmount,
+                                           @RequestParam(value = "tradedCurrency") String tradedCurrency,
+                                           @RequestParam(value = "counterAmount") int counterAmount,
+                                           @RequestParam(value = "counterCurrency") String counterCurrency) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
-        Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
+        Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(counterparty))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
         // Create a new IOU states using the parameters given.
         try {
-            IOUState state = new IOUState(new Amount<>((long) amount * 100, Currency.getInstance(currency)), lender, me);
+            IOUState state = new IOUState(
+                    new Date(),
+                    new SimpleDateFormat("yyyy-MM-dd").parse(valueDate),
+                    new Amount<>((long) tradedAmount, Currency.getInstance(tradedCurrency)),
+                    Currency.getInstance(tradedCurrency),
+                    me,
+                    new Amount<>((long) counterAmount, Currency.getInstance(counterCurrency)),
+                    Currency.getInstance(counterCurrency),
+                    lender,
+                    TradeStatus.NEW);
             // Start the IOUIssueFlow. We block and waits for the flows to return.
             SignedTransaction result = proxy.startTrackedFlowDynamic(IOUIssueFlow.InitiatorFlow.class, state).getReturnValue().get();
             // Return the response.

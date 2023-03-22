@@ -8,7 +8,8 @@ import java.util.*;
 import com.google.common.collect.ImmutableList;
 import net.corda.core.serialization.ConstructorForDeserialization;
 import net.corda.samples.obligation.contracts.IOUContract;
-
+import net.corda.core.serialization.CordaSerializable;
+import java.text.SimpleDateFormat;
 /**
  * The State object, with the following properties:
  * - [linearId] A unique id shared by all LinearState states representing the same agreement throughout history within
@@ -18,41 +19,100 @@ import net.corda.samples.obligation.contracts.IOUContract;
 
 @BelongsToContract(IOUContract.class)
 public class IOUState implements ContractState, LinearState {
+    public final Date tradeTime;
+    public final Date valueDate;
+    public final Party tradingParty;
+    public final Party counterParty;
+    public final Amount<Currency> tradedAssetAmount;
+    public final Amount<Currency> counterAssetAmount;
+    public final Currency tradedAssetType;
+    public final Currency counterAssetType;
 
-    public final Amount<Currency> amount;
-    public final Party lender;
-    public final Party borrower;
-    public final Amount<Currency> paid;
+    public final TradeStatus tradeStatus;
+
     private final UniqueIdentifier linearId;
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+
+    @CordaSerializable
+    public enum TradeStatus {
+        NEW,
+        CONFIRMED,
+        CANCELLED,
+        SETTLED;
+    }
 
     // Private constructor used only for copying a State object
     @ConstructorForDeserialization
-    private IOUState(Amount<Currency> amount, Party lender, Party borrower, Amount<Currency> paid, UniqueIdentifier linearId){
-        this.amount = amount;
-        this.lender = lender;
-        this.borrower = borrower;
-        this.paid = paid;
+    private IOUState(Date tradeTime,
+                     Date valueDate,
+                     Amount<Currency> tradedAssetAmount,
+                     Currency tradedAssetType,
+                     Party tradingParty,
+                     Amount<Currency> counterAssetAmount,
+                     Currency counterAssetType,
+                     Party counterParty,
+                     TradeStatus tradeStatus,
+                     UniqueIdentifier linearId){
+        this.tradeTime = tradeTime;
+        this.valueDate = valueDate;
+        this.tradedAssetAmount = tradedAssetAmount;
+        this.tradedAssetType = tradedAssetType;
+        this.tradingParty = tradingParty;
+        this.counterAssetAmount = counterAssetAmount;
+        this.counterAssetType = counterAssetType;
+        this.counterParty = counterParty;
+        this.tradeStatus = tradeStatus;
         this.linearId = linearId;
     }
 
-    public IOUState(Amount<Currency> amount, Party lender, Party borrower) {
-        this(amount, lender, borrower, new Amount<>(0, amount.getToken()), new UniqueIdentifier());
+    public IOUState(Date tradeTime,
+                     Date valueDate,
+                     Amount<Currency> tradedAssetAmount,
+                     Currency tradedAssetType,
+                     Party tradingParty,
+                     Amount<Currency> counterAssetAmount,
+                     Currency counterAssetType,
+                     Party counterParty,
+                    TradeStatus tradeStatus){
+        this(tradeTime, valueDate, tradedAssetAmount, tradedAssetType, tradingParty, counterAssetAmount, counterAssetType,
+                counterParty, tradeStatus, new UniqueIdentifier());
     }
 
-    public Amount<Currency> getAmount() {
-        return amount;
+
+    public Date getTradeTime() {
+        return tradeTime;
     }
 
-    public Party getLender() {
-        return lender;
+    public Date getValueDate() {
+        return valueDate;
     }
 
-    public Party getBorrower() {
-        return borrower;
+    public Party getTradingParty() {
+        return tradingParty;
     }
 
-    public Amount<Currency> getPaid() {
-        return paid;
+    public Party getCounterParty() {
+        return counterParty;
+    }
+
+    public Amount<Currency> getTradedAssetAmount() {
+        return tradedAssetAmount;
+    }
+
+    public Amount<Currency> getCounterAssetAmount() {
+        return counterAssetAmount;
+    }
+
+    public Currency getTradedAssetType() {
+        return tradedAssetType;
+    }
+
+    public Currency getCounterAssetType() {
+        return counterAssetType;
+    }
+
+    public net.corda.samples.obligation.states.IOUState.TradeStatus getTradeStatus() {
+        return tradeStatus;
     }
 
     @Override
@@ -66,7 +126,7 @@ public class IOUState implements ContractState, LinearState {
      */
     @Override
     public List<AbstractParty> getParticipants() {
-        return ImmutableList.of(lender, borrower);
+        return ImmutableList.of(tradingParty, counterParty);
     }
 
     /**
@@ -76,16 +136,28 @@ public class IOUState implements ContractState, LinearState {
      * - [copy] creates a copy of the states using the internal copy constructor ensuring the LinearId is preserved.
      */
     public IOUState pay(Amount<Currency> amountToPay) {
-        Amount<Currency> newAmountPaid = this.paid.plus(amountToPay);
-        return new IOUState(amount, lender, borrower, newAmountPaid, linearId);
+        Amount<Currency> newAmountPaid = this.tradedAssetAmount.minus(amountToPay);
+        return new IOUState(tradeTime, valueDate, newAmountPaid, tradedAssetType, counterParty, counterAssetAmount,
+                counterAssetType, counterParty, tradeStatus, this.getLinearId());
     }
 
     public IOUState withNewLender(Party newLender) {
-        return new IOUState(amount, newLender, borrower, paid, linearId);
+        return new IOUState(tradeTime, valueDate, tradedAssetAmount, tradedAssetType, newLender, counterAssetAmount,
+                counterAssetType, counterParty, tradeStatus, this.getLinearId());
     }
 
-    public IOUState copy(Amount<Currency> amount, Party lender, Party borrower, Amount<Currency> paid) {
-        return new IOUState(amount, lender, borrower, paid, this.getLinearId());
+    public IOUState copy(
+            Date tradeTime,
+            Date valueDate,
+            Amount<Currency> tradedAssetAmount,
+            Currency tradedAssetType,
+            Party tradingParty,
+            Amount<Currency> counterAssetAmount,
+            Currency counterAssetType,
+            Party counterParty,
+            TradeStatus tradeStatus) {
+        return new IOUState(tradeTime, valueDate, tradedAssetAmount, tradedAssetType, tradingParty, counterAssetAmount,
+                counterAssetType, counterParty, tradeStatus, this.getLinearId());
     }
 
 }
