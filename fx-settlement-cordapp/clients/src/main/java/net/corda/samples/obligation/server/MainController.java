@@ -214,10 +214,10 @@ public class MainController {
             IOUState state = new IOUState(
                     new Date(),
                     new SimpleDateFormat("yyyy-MM-dd").parse(valueDate),
-                    new Amount<>((long) tradedAmount, Currency.getInstance(tradedCurrency)),
+                    new Amount<>((long) tradedAmount * 100, Currency.getInstance(tradedCurrency)),
                     Currency.getInstance(tradedCurrency),
                     me,
-                    new Amount<>((long) counterAmount, Currency.getInstance(counterCurrency)),
+                    new Amount<>((long) counterAmount * 100, Currency.getInstance(counterCurrency)),
                     Currency.getInstance(counterCurrency),
                     lender,
                     TradeStatus.NEW);
