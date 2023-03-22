@@ -120,8 +120,10 @@ public class IOUContract implements Contract {
 //                    System.out.println("In IOUContract.NetTrades() verification...");
 //                    return null;
 //                });
-//            } else if (commandData.equals(new Commands.Settle())) {
-//
+//            }
+            else if (commandData.equals(new Commands.Settle())) {
+                // TODO put a check on valueDate in contract
+
 //                requireThat(require -> {
 //
 //                    // Check there is only one group of IOUs and that there is always an input IOU.
@@ -181,7 +183,7 @@ public class IOUContract implements Contract {
 //                })
 //                ;
 //
-//            }
+            }
         }
     }
 

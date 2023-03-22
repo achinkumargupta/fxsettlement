@@ -71,7 +71,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                 <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control" id="tradedAssetAmount">
             </div>
             <div class="form-group">
-                <label for="tradedAssetCurrency" class="control-label">Traded Currency:</label>
+                <label for="tradedAssetCurrency" class="control-label">Traded Asset Currency:</label>
                 <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control" id="tradedAssetCurrency">
             </div>
             <div class="form-group">
@@ -210,29 +210,15 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <script type="text/ng-template" id="settleModal.html">
     <div class="modal-header">
-        <h4 class="modal-title">Settle IOU</h4>
+        <h4 class="modal-title">Settle Trade</h4>
     </div>
     <form>
         <div class="modal-body">
-            <div class="form-group">
-                <label for="settleCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="settleModal.form.currency" class="form-control" id="settleCurrency">
-            </div>
-            <div class="form-group">
-                <label for="settleAmount" class="control-label">Amount (Int):</label>
-                <input type="text" ng-model="settleModal.form.amount" class="form-control" id="settleAmount">
-            </div>
-            <div ng-show="settleModal.formError" class="form-group">
-                <div class="alert alert-danger" role="alert">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    <span class="sr-only">Error:</span>
-                    Enter valid IOU settle parameters.
-                </div>
-            </div>
+            <p>Are you sure to proceed with settlement?</p>
         </div>
         <div class="modal-footer">
-            <button ng-click="settleModal.cancel()" type="button" class="btn btn-default">Close</button>
-            <button ng-click="settleModal.settle()" type="button" class="btn btn-primary">Settle</button>
+            <button ng-click="settleModal.cancel()" type="button" class="btn btn-default">Cancel</button>
+            <button ng-click="settleModal.settle()" type="button" class="btn btn-primary">Ok</button>
         </div>
     </form>
 </script>
@@ -355,7 +341,6 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <!--                        <th>Counter Currency</th>-->
                         <th>Trade Status</th>
                         <th>Id</th>
-                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -369,7 +354,6 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td class="vert-align">{{iou.counterAssetAmount}}</td>
                         <!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
                         <td class="vert-align">{{iou.tradeStatus}}</td>
-                        <td class="vert-align">{{iou.linearId.id}}</td>
                     </tr>
                     </tbody>
                 </table>

@@ -275,15 +275,12 @@ public class MainController {
      * curl -X GET 'http://localhost:10007/api/iou/settle-iou?id=705dc5c5-44da-4006-a55b-e29f78955089&amount=98&currency=USD'
      */
     @GetMapping(value =  "settle-iou" , produces = TEXT_PLAIN_VALUE )
-    public  ResponseEntity<String> settleIOU(@RequestParam(value = "id") String id,
-                                             @RequestParam(value = "amount") int amount,
-                                             @RequestParam(value = "currency") String currency) {
+    public  ResponseEntity<String> settleIOU(@RequestParam(value = "id") String id) {
 
         UniqueIdentifier linearId = new UniqueIdentifier(null, UUID.fromString(id));
         try {
-            proxy.startTrackedFlowDynamic(IOUSettleFlow.InitiatorFlow.class, linearId,
-                    new Amount<>((long) amount * 100, Currency.getInstance(currency))).getReturnValue().get();
-            return ResponseEntity.status(HttpStatus.CREATED).body(""+ amount+ currency +" paid off on IOU id "+linearId.toString()+".");
+            proxy.startTrackedFlowDynamic(IOUSettleFlow.InitiatorFlow.class, linearId).getReturnValue().get();
+            return ResponseEntity.status(HttpStatus.CREATED).body("Trade " + linearId.toString()+" is successfully settled.");
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
