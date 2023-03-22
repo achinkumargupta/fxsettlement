@@ -345,19 +345,30 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                 <table class="table">
                     <thead>
                     <tr>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Amount</th>
-                        <th>Paid</th>
+                        <th>Trade Time</th>
+                        <th>Value Date</th>
+                        <th>Trading Party</th>
+                        <th>Traded Amount</th>
+                        <!--                        <th>Traded Currency</th>-->
+                        <th>Counter Party</th>
+                        <th>Counter Amount</th>
+                        <!--                        <th>Counter Currency</th>-->
+                        <th>Trade Status</th>
                         <th>Id</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="iou in demoApp.settled_trades">
-                        <td class="vert-align">{{iou.lender}}</td>
-                        <td class="vert-align">{{iou.borrower}}</td>
-                        <td class="vert-align">{{iou.amount}}</td>
-                        <td class="vert-align">{{iou.amount}}</td>
+                        <td class="vert-align">{{iou.tradeTime}}</td>
+                        <td class="vert-align">{{iou.valueDate.substring(0,10)}}</td>
+                        <td class="vert-align">{{iou.tradingParty}}</td>
+                        <td class="vert-align">{{iou.tradedAssetAmount}}</td>
+                        <!--                        <td class="vert-align">{{iou.tradedAssetType}}</td>-->
+                        <td class="vert-align">{{iou.counterParty}}</td>
+                        <td class="vert-align">{{iou.counterAssetAmount}}</td>
+                        <!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
+                        <td class="vert-align">{{iou.tradeStatus}}</td>
                         <td class="vert-align">{{iou.linearId.id}}</td>
                     </tr>
                     </tbody>

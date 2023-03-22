@@ -24,18 +24,16 @@ public class SelfIssueCashFlow extends FlowLogic<Cash.State> {
     @Suspendable
     public Cash.State call() throws FlowException {
         /** Create the cash issue command. */
-//        OpaqueBytes issueRef = OpaqueBytes.of("1".getBytes());
-//
-//        // Obtain a reference to a notary we wish to use.
-//        /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
-//        final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
-//
-//        /** Create the cash issuance transaction. */
-//        SignedTransaction cashIssueTransaction = subFlow(new CashIssueFlow(amount, issueRef, notary)).getStx();
-//        /** Return the cash output. */
-//        return (Cash.State) cashIssueTransaction.getTx().getOutputs().get(0).getData();
+        OpaqueBytes issueRef = OpaqueBytes.of("1".getBytes());
 
-        return null;
+        // Obtain a reference to a notary we wish to use.
+        /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
+        final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
+
+        /** Create the cash issuance transaction. */
+        SignedTransaction cashIssueTransaction = subFlow(new CashIssueFlow(amount, issueRef, notary)).getStx();
+        /** Return the cash output. */
+        return (Cash.State) cashIssueTransaction.getTx().getOutputs().get(0).getData();
     }
 
 }
