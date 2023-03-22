@@ -202,9 +202,9 @@ public class MainController {
     @PutMapping(value =  "/issue-iou" , produces = TEXT_PLAIN_VALUE )
     public ResponseEntity<String> issueIOU(@RequestParam(value = "valueDate") String valueDate,
                                            @RequestParam(value = "counterparty") String counterparty,
-                                           @RequestParam(value = "tradedAmount") int tradedAmount,
+                                           @RequestParam(value = "tradedAmount") long tradedAmount,
                                            @RequestParam(value = "tradedCurrency") String tradedCurrency,
-                                           @RequestParam(value = "counterAmount") int counterAmount,
+                                           @RequestParam(value = "counterAmount") long counterAmount,
                                            @RequestParam(value = "counterCurrency") String counterCurrency) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);

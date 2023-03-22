@@ -73,13 +73,18 @@ public class IOUSettleFlow {
             // Step 4. Check we have enough cash to settle the requested amount.
             final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), (Currency) tradedAssetAmount.getToken());
             if (cashBalance.getQuantity() < tradedAssetAmount.getQuantity()) {
-                throw new IllegalArgumentException("Not enough " + tradedAssetType + " cash to settle with the trade.");
+                throw new IllegalArgumentException("Not enough cash in " + tradedAssetType + " to settle with the trade.");
             }
 
             // Step 5. Get some cash from the vault and add a spend to our transaction builder.
             // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
             // generateSpend returns all public keys which have to be used to sign transaction
             List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount, getOurIdentityAndCert(), counterparty).getSecond();
+            List<PublicKey> keyList1 =
+                    CashUtils.generateSpend(getServiceHub(), tb,
+                    counterAssetAmount,
+                    getServiceHub().getNetworkMapCache().getNodeByLegalIdentity(counterparty).getLegalIdentitiesAndCerts().get(0),
+                    tradingParty).getSecond();
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
@@ -91,6 +96,7 @@ public class IOUSettleFlow {
 
             // Step 8. Verify and sign the transaction.
             tb.verify(getServiceHub());
+            keyList.addAll(keyList1);
             keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
             SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, keyList);
 
