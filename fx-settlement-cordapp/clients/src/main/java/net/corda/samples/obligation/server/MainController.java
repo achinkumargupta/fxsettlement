@@ -236,14 +236,15 @@ public class MainController {
     }
 
     @PutMapping(value =  "/net-trades" , produces = TEXT_PLAIN_VALUE )
-    public ResponseEntity<String> netTrades(@RequestParam(value = "currency") String currency,
+    public ResponseEntity<String> netTrades(@RequestParam(value = "currency") String currencyA,
+                                            @RequestParam(value = "currency") String currencyB,
                                            @RequestParam(value = "party") String party) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
         try {
             // Start the IOUNetTradesFlow. We block and waits for the flows to return.
-            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currency), lender).getReturnValue().get();
+            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currencyA), lender).getReturnValue().get();
             // Return the response.
             return ResponseEntity
                     .status(HttpStatus.CREATED)
