@@ -244,7 +244,7 @@ public class MainController {
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
         try {
             // Start the IOUNetTradesFlow. We block and waits for the flows to return.
-            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currencyA), lender).getReturnValue().get();
+            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currencyA), Currency.getInstance(currencyB), lender).getReturnValue().get();
             // Return the response.
             return ResponseEntity
                     .status(HttpStatus.CREATED)

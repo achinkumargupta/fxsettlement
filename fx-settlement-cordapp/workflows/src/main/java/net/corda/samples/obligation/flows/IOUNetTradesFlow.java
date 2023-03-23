@@ -43,32 +43,35 @@ public class IOUNetTradesFlow {
     @StartableByRPC
     public static class InitiatorFlow extends FlowLogic<SignedTransaction> {
         private final Party netAgainstParty;
-        private final Currency currency;
+        private final Currency currencyA;
+        private final Currency currencyB;
 
-        public InitiatorFlow(Currency currency, Party netAgainstParty) {
-            this.currency = currency;
+        public InitiatorFlow(Currency currencyA, Currency currencyB, Party netAgainstParty) {
+            this.currencyA = currencyA;
+            this.currencyB = currencyB;
             this.netAgainstParty = netAgainstParty;
         }
 
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
-//            QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+            QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
+            System.out.println("IOUNetTradesFlow - Currency Pair " + currencyA + " :: " + currencyB + " Party " + netAgainstParty);
+
 //            for ( StateAndRef<IOUState> s : getServiceHub().getVaultService().queryBy(IOUState.class, stateStatusCriteria).getStates()) {
 //                System.out.println("CONSUMED Vault" + s);
 //            }
-//
-//            System.out.println("Currency " + currency + " Party " + netAgainstParty);
-//            // Code to get all states
+
+            // Code to get all states
 //            Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
 //            List<StateAndRef> validInputStatesToSettle = new ArrayList<StateAndRef>();
 //            List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
-//            Amount<Currency> totalAmount = new Amount<Currency>(0, currency);
+//            Amount<Currency> totalAmount = new Amount<Currency>(0, currencyA);
 //            for (Object stateToSettle : allResults.getStates()) {
 //                IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
-//                if (inputStateToSettle.getLender().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+//                if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
 //                    // Pick the matching input states
-//                    totalAmount = totalAmount.plus(inputStateToSettle.amount.minus(inputStateToSettle.paid));
+//                    totalAmount = totalAmount.plus(getTradedAssetAmount());
 //                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
 //                            .stream().map(AbstractParty::getOwningKey)
 //                            .collect(Collectors.toList()));
@@ -149,7 +152,7 @@ public class IOUNetTradesFlow {
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
-
+//
 //            class SignTxFlow extends SignTransactionFlow {
 //
 //                private SignTxFlow(FlowSession flowSession, ProgressTracker progressTracker) {
