@@ -154,8 +154,9 @@ public class IOUNetTradesFlow {
                 // Step 5. Get some cash from the vault and add a spend to our transaction builder.
                 // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
                 // generateSpend returns all public keys which have to be used to sign transaction
-                keyList.addAll(CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyAAmount,
-                        getOurIdentityAndCert(), netAgainstParty).getSecond());
+                List<PublicKey> keyList1 = (List<PublicKey>) CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyAAmount,
+                        getOurIdentityAndCert(), netAgainstParty).getSecond();
+                keyList.addAll(keyList1);
             }
 
             if (netSpendForCurrencyB > 0) {
@@ -170,8 +171,9 @@ public class IOUNetTradesFlow {
                 // Step 5. Get some cash from the vault and add a spend to our transaction builder.
                 // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
                 // generateSpend returns all public keys which have to be used to sign transaction
-                keyList.addAll(CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyBAmount,
-                        getOurIdentityAndCert(), netAgainstParty).getSecond());
+                List<PublicKey> keyList1 = (List<PublicKey>) CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyBAmount,
+                        getOurIdentityAndCert(), netAgainstParty).getSecond();
+                keyList.addAll(keyList1);
             }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
