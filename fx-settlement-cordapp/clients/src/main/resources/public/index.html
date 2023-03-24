@@ -115,14 +115,21 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         ng-options="peer as peer for peer in netTradesModal.peers">
                 </select>
             </div>
-            <div class="form-group">
-                <label class="control-label">Currency Pair:</label>
+            <label class="control-label">Currency Pair:</label>
                 <div class="input-group">
                     <input type="text" ng-model="netTradesModal.form.currencyA" class="form-control">
                     <span class="input-group-addon"></span>
                     <input type="text" ng-model="netTradesModal.form.currencyB" class="form-control">
-                </div>
             </div>
+<!--            -->
+<!--            <div class="form-group">-->
+<!--                <label for="currA" class="control-label">Currency A:</label>-->
+<!--                <input type="text" ng-model="netTradesModal.form.currencyA" class="form-control" id="currA">-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="currB" class="control-label">Currency B:</label>-->
+<!--                <input type="text" ng-model="netTradesModal.form.currencyB" class="form-control" id="currB">-->
+<!--            </div>-->
             <div ng-show="netTradesModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -284,7 +291,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <th>Counter Party</th>
                         <th>Counter Amount</th>
 <!--                        <th>Counter Currency</th>-->
-                        <th>Trade Status</th>
+<!--                        <th>Trade Status</th>-->
                         <th>Id</th>
                         <th>Actions</th>
                     </tr>
@@ -299,7 +306,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td class="vert-align">{{iou.counterParty}}</td>
                         <td class="vert-align">{{iou.counterAssetAmount}}</td>
 <!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
-                        <td class="vert-align">{{iou.tradeStatus}}</td>
+<!--                        <td class="vert-align">{{iou.tradeStatus}}</td>-->
                         <td class="vert-align">{{iou.linearId.id}}</td>
                         <td>
                             <div class="btn-group" role="group">
@@ -343,7 +350,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <th>Counter Party</th>
                         <th>Counter Amount</th>
                         <!--                        <th>Counter Currency</th>-->
-                        <th>Trade Status</th>
+<!--                        <th>Trade Status</th>-->
                         <th>Id</th>
                     </tr>
                     </thead>
@@ -357,7 +364,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         <td class="vert-align">{{iou.counterParty}}</td>
                         <td class="vert-align">{{iou.counterAssetAmount}}</td>
                         <!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
-                        <td class="vert-align">{{iou.tradeStatus}}</td>
+<!--                        <td class="vert-align">{{iou.tradeStatus}}</td>-->
                         <td class="vert-align">{{iou.linearId.id}}</td>
                     </tr>
                     </tbody>

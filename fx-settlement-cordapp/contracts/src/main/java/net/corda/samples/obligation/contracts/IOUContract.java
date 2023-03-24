@@ -122,23 +122,24 @@ public class IOUContract implements Contract {
 //                });
 //            }
             else if (commandData.equals(new Commands.Settle())) {
-                // TODO put a check on valueDate in contract
+                 //TODO put a check on valueDate in contract
 
-//                requireThat(require -> {
-//
-//                    // Check there is only one group of IOUs and that there is always an input IOU.
-//                    List<LedgerTransaction.InOutGroup<IOUState, UniqueIdentifier>> groups = tx.groupStates(IOUState.class, IOUState::getLinearId);
-//                    require.using("There must be one input IOU.", groups.get(0).getInputs().size() > 0);
-//
-//                    // Check that there are output cash states.
-//                    List<Cash.State> allOutputCash = tx.outputsOfType(Cash.State.class);
-//                    require.using("There must be output cash.", !allOutputCash.isEmpty());
-//
-//                    // Check that there is only one group of input IOU's
-//                    List<LedgerTransaction.InOutGroup<IOUState, UniqueIdentifier>> allGroupStates = tx.groupStates(IOUState.class, IOUState::getLinearId);
-//                    require.using("List has more than one element.", allGroupStates.size() < 2);
-//
-//                    IOUState inputIOU = tx.inputsOfType(IOUState.class).get(0);
+                requireThat(require -> {
+
+                    // Check there is only one group of IOUs and that there is always an input IOU.
+                    List<LedgerTransaction.InOutGroup<IOUState, UniqueIdentifier>> groups = tx.groupStates(IOUState.class, IOUState::getLinearId);
+                    require.using("There must be one input IOU.", groups.get(0).getInputs().size() > 0);
+
+                    // Check that there are output cash states.
+                    List<Cash.State> allOutputCash = tx.outputsOfType(Cash.State.class);
+                    require.using("There must be output cash.", !allOutputCash.isEmpty());
+
+                    // Check that there is only one group of input IOU's
+                    List<LedgerTransaction.InOutGroup<IOUState, UniqueIdentifier>> allGroupStates = tx.groupStates(IOUState.class, IOUState::getLinearId);
+                    require.using("List has more than one element.", allGroupStates.size() < 2);
+
+                    IOUState inputIOU = tx.inputsOfType(IOUState.class).get(0);
+                    //TODO fix these too.
 //                    Amount<Currency> inputAmount = inputIOU.amount;
 //
 //                    // check that the output cash is being assigned to the lender
@@ -173,16 +174,16 @@ public class IOUContract implements Contract {
 //                        require.using("The lender may not change when settling.", inputIOU.lender.equals(outputIOU.lender));
 //                        require.using("The borrower may not change when settling.", inputIOU.borrower.equals(outputIOU.borrower));
 //                    }
-//
-//                    Set<PublicKey> listOfParticipantPublicKeys = inputIOU.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toSet());
-//                    List<PublicKey> arrayOfSigners = command.getSigners();
-//                    Set<PublicKey> setOfSigners = new HashSet<PublicKey>(arrayOfSigners);
-//                    require.using("Both lender and borrower must sign IOU settle transaction.", setOfSigners.equals(listOfParticipantPublicKeys));
-//
-//                    return null;
-//                })
-//                ;
-//
+
+                    Set<PublicKey> listOfParticipantPublicKeys = inputIOU.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toSet());
+                    List<PublicKey> arrayOfSigners = command.getSigners();
+                    Set<PublicKey> setOfSigners = new HashSet<PublicKey>(arrayOfSigners);
+                    require.using("Both lender and borrower must sign IOU settle transaction.", setOfSigners.equals(listOfParticipantPublicKeys));
+
+                    return null;
+                })
+                ;
+
             }
         }
     }

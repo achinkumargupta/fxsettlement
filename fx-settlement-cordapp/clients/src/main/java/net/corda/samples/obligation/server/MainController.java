@@ -236,9 +236,9 @@ public class MainController {
     }
 
     @PutMapping(value =  "/net-trades" , produces = TEXT_PLAIN_VALUE )
-    public ResponseEntity<String> netTrades(@RequestParam(value = "currency") String currencyA,
-                                            @RequestParam(value = "currency") String currencyB,
-                                           @RequestParam(value = "party") String party) throws IllegalArgumentException {
+    public ResponseEntity<String> netTrades(@RequestParam(value = "currencyA") String currencyA,
+                                            @RequestParam(value = "currencyB") String currencyB,
+                                            @RequestParam(value = "party") String party) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
