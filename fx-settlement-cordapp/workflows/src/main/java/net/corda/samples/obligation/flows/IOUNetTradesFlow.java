@@ -55,117 +55,128 @@ public class IOUNetTradesFlow {
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
-//            QueryCriteria stateStatusCriteria = new VaultQueryCriteria(Vault.StateStatus.CONSUMED);
-//            System.out.println("IOUNetTradesFlow - Currency Pair " + currencyA + " :: " + currencyB + " Party " + netAgainstParty);
-//
-//            for ( StateAndRef<IOUState> s : getServiceHub().getVaultService().queryBy(IOUState.class, stateStatusCriteria).getStates()) {
-//                System.out.println("CONSUMED Vault" + s);
-//            }
+            System.out.println("IOUNetTradesFlow - Currency Pair " + currencyA + " :: " + currencyB + " Party " + netAgainstParty);
 
-//            Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
-//            List<StateAndRef> validInputStatesToSettle = new ArrayList<StateAndRef>();
-//            List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
-//
-//            Amount<Currency> netAmountForCurrencyA = new Amount<Currency>(0, currencyA);
-//            Amount<Currency> netAmountForCurrencyB = new Amount<Currency>(0, currencyB);
-//
-//            for (Object stateToSettle : allResults.getStates()) {
-//                IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
-//
-//                if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
-//                        !inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
-//                    continue;
-//                }
-//                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode()) &&
-//                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
-//                    continue;
-//                }
-//                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode()) &&
-//                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
-//                    continue;
-//                }
-//
-//                System.out.println("Matched in block 1 -- state " + inputStateToSettle.getCounterParty() +
-//                        " :: " + netAgainstParty.getOwningKey() + " ISa:: " +
-//                        inputStateToSettle.getTradedAssetType().getCurrencyCode()  + " ISb:: " +
-//                        inputStateToSettle.getCounterAssetType().getCurrencyCode() + " CurA:: " +
-//                        currencyA.getCurrencyCode() + " CurB:: " + currencyB.getCurrencyCode()
-//                        + " Amount: " + inputStateToSettle.getTradedAssetAmount().getQuantity());
-//
-//
-//                // This means tradingAmount has to be reduced from our account
-//                if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
-//                    // Pick the matching input states
-//                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
-//                        netAmountForCurrencyA.plus(inputStateToSettle.getTradedAssetAmount());
-//                    }
-//                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
-//                        netAmountForCurrencyB.plus(inputStateToSettle.getTradedAssetAmount());
-//                    }
-//
-//                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
-//                            .stream().map(AbstractParty::getOwningKey)
-//                            .collect(Collectors.toList()));
-//
-//                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
-//                    System.out.println("Matched in block 1 -- state " +
-//                            " :: " + netAgainstParty.getOwningKey() + " ISa:: " +
-//                            inputStateToSettle.getTradedAssetType().getCurrencyCode() + " CurA:: " +
-//                            currencyA.getCurrencyCode() + " CurB:: " + currencyB.getCurrencyCode()
-//                    + " Amount: " + inputStateToSettle.getTradedAssetAmount().getQuantity());
-//                }
-//            }
+            Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
+            List<StateAndRef> validInputStatesToSettle = new ArrayList<StateAndRef>();
+            List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
 
-//            // Step 1. Get a reference to the notary service on our network and our key pair.
-//            /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
-//            final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
-//
-//            // Step 2. Check the party running this flows is the borrower.
-//            if (validInputStatesToSettle.isEmpty()) {
-//                throw new IllegalArgumentException("There are no trades to settle for party " + netAgainstParty);
-//            }
-//
-//            System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
-//            // Step 3. Create a new TransactionBuilder object.
-//            final TransactionBuilder builder = new TransactionBuilder(notary);
-//
-//            // Step 4. Check we have enough cash to settle the requested amount.
-//            final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), currency);
-//            if (cashBalance.getQuantity() < totalAmount.getQuantity()) {
-//                throw new IllegalArgumentException("Borrower doesn't have enough cash to settle with the amount specified.");
-//            }
-//            System.out.println("Cash balance: " + cashBalance);
-//
-//            // Step 5. Get some cash from the vault and add a spend to our transaction builder.
-//            // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
-//            // generateSpend returns all public keys which have to be used to sign transaction
-//            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), builder, totalAmount, getOurIdentityAndCert(), netAgainstParty).getSecond();
-//
-//            // Step 6. Add the IOU input states and settle command to the transaction builder.
-//            for (StateAndRef validInputStateToSettle : validInputStatesToSettle) {
-//                Command<NetTrades> command = new Command<>(
-//                        new NetTrades(),
-//                        listOfRequiredSigners.stream().distinct().collect(Collectors.toList())
-//                );
-//                builder.addCommand(command);
-//                builder.addInputState(validInputStateToSettle);
-//            }
-//            // Step 8. Verify and sign the transaction.
-//            builder.verify(getServiceHub());
-//            keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
-//            SignedTransaction ptx = getServiceHub().signInitialTransaction(builder, keyList);
-//
-//            // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
-//            FlowSession session = initiateFlow(netAgainstParty);
-//            new IdentitySyncFlow.Send(session, ptx.getTx());
-//
-//            SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
-//
-//            /* 12. Return the output of the FinalityFlow which sends the transaction to the notary for verification
-//             *     and the causes it to be persisted to the vault of appropriate nodes.
-//             */
-//            return subFlow(new FinalityFlow(fullySignedTransaction, session));
-            return null;
+            long netSpendForCurrencyA = 0;
+            long netSpendForCurrencyB = 0;
+
+            for (Object stateToSettle : allResults.getStates()) {
+                IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
+
+                if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
+                        !inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    continue;
+                }
+                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode()) &&
+                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                    continue;
+                }
+                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode()) &&
+                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                    continue;
+                }
+
+                System.out.println("Matched in block 1 -- state " + inputStateToSettle.getCounterParty() +
+                        " :: " + netAgainstParty.getOwningKey() + " ISa:: " +
+                        inputStateToSettle.getTradedAssetType().getCurrencyCode()  + " ISb:: " +
+                        inputStateToSettle.getCounterAssetType().getCurrencyCode() + " CurA:: " +
+                        currencyA.getCurrencyCode() + " CurB:: " + currencyB.getCurrencyCode()
+                        + " Amount: " + inputStateToSettle.getTradedAssetAmount().getQuantity());
+
+
+                // This means tradingAmount has to be reduced from our account
+                if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    // Pick the matching input states
+                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getTradedAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getCounterAssetAmount().getQuantity();
+                    }
+                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getCounterAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getTradedAssetAmount().getQuantity();
+                    }
+
+                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                            .stream().map(AbstractParty::getOwningKey)
+                            .collect(Collectors.toList()));
+
+                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
+                }
+
+                if (inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    // Pick the matching input states
+                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getTradedAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getCounterAssetAmount().getQuantity();
+                    }
+                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getCounterAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getTradedAssetAmount().getQuantity();
+                    }
+
+                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                            .stream().map(AbstractParty::getOwningKey)
+                            .collect(Collectors.toList()));
+
+                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
+                }
+            }
+
+            System.out.println("Net Spend A: "+ netSpendForCurrencyA + " " + currencyA.getCurrencyCode() + " :: "
+                    + "Net Spend b : " + netSpendForCurrencyB + " " + currencyB.getCurrencyCode());
+            // Step 1. Get a reference to the notary service on our network and our key pair.
+            /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
+            final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
+
+            // Step 2. Check the party running this flows is the borrower.
+            if (validInputStatesToSettle.isEmpty()) {
+                throw new IllegalArgumentException("There are no trades to settle for party " + netAgainstParty);
+            }
+
+            System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
+            // Step 3. Create a new TransactionBuilder object.
+            final TransactionBuilder builder = new TransactionBuilder(notary);
+
+            // Step 4. Check we have enough cash to settle the requested amount.
+            final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), currency);
+            if (cashBalance.getQuantity() < totalAmount.getQuantity()) {
+                throw new IllegalArgumentException("Borrower doesn't have enough cash to settle with the amount specified.");
+            }
+            System.out.println("Cash balance: " + cashBalance);
+
+            // Step 5. Get some cash from the vault and add a spend to our transaction builder.
+            // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
+            // generateSpend returns all public keys which have to be used to sign transaction
+            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), builder, totalAmount, getOurIdentityAndCert(), netAgainstParty).getSecond();
+
+            // Step 6. Add the IOU input states and settle command to the transaction builder.
+            for (StateAndRef validInputStateToSettle : validInputStatesToSettle) {
+                Command<NetTrades> command = new Command<>(
+                        new NetTrades(),
+                        listOfRequiredSigners.stream().distinct().collect(Collectors.toList())
+                );
+                builder.addCommand(command);
+                builder.addInputState(validInputStateToSettle);
+            }
+            // Step 8. Verify and sign the transaction.
+            builder.verify(getServiceHub());
+            keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
+            SignedTransaction ptx = getServiceHub().signInitialTransaction(builder, keyList);
+
+            // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
+            FlowSession session = initiateFlow(netAgainstParty);
+            new IdentitySyncFlow.Send(session, ptx.getTx());
+
+            SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
+
+            /* 12. Return the output of the FinalityFlow which sends the transaction to the notary for verification
+             *     and the causes it to be persisted to the vault of appropriate nodes.
+             */
+            return subFlow(new FinalityFlow(fullySignedTransaction, session));
         }
     }
 
@@ -187,29 +198,28 @@ public class IOUNetTradesFlow {
         @Override
         public SignedTransaction call() throws FlowException {
 
-//            class SignTxFlow extends SignTransactionFlow {
-//
-//                private SignTxFlow(FlowSession flowSession, ProgressTracker progressTracker) {
-//                    super(flowSession, progressTracker);
-//                }
-//
-//                @Override
-//                protected void checkTransaction(SignedTransaction stx) {
-//                    // Once the transaction has verified, initialize txWeJustSignedID variable.
-//                    txWeJustSigned = stx.getId();
-//                }
-//            }
-//
-//            // Create a sign transaction flows
-//            SignTxFlow signTxFlow = new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker());
-//
-//            // Run the sign transaction flows to sign the transaction
-//            subFlow(signTxFlow);
-//
-//            // Run the ReceiveFinalityFlow to finalize the transaction and persist it to the vault.
-//            return subFlow(new ReceiveFinalityFlow(flowSession, txWeJustSigned));
+            class SignTxFlow extends SignTransactionFlow {
 
-            return null;
+                private SignTxFlow(FlowSession flowSession, ProgressTracker progressTracker) {
+                    super(flowSession, progressTracker);
+                }
+
+                @Override
+                protected void checkTransaction(SignedTransaction stx) {
+                    // Once the transaction has verified, initialize txWeJustSignedID variable.
+                    txWeJustSigned = stx.getId();
+                }
+            }
+
+            // Create a sign transaction flows
+            SignTxFlow signTxFlow = new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker());
+
+            // Run the sign transaction flows to sign the transaction
+            subFlow(signTxFlow);
+
+            // Run the ReceiveFinalityFlow to finalize the transaction and persist it to the vault.
+            return subFlow(new ReceiveFinalityFlow(flowSession, txWeJustSigned));
+
         }
     }
 }
