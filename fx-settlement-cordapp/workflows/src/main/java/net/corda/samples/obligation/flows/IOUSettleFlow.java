@@ -26,7 +26,7 @@ import java.security.PublicKey;
 import java.util.*;
 import net.corda.core.contracts.TransactionResolutionException;
 import net.corda.core.identity.PartyAndCertificate;
-
+import net.corda.core.utilities.UntrustworthyData;
 import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
 import java.util.Currency;
@@ -120,9 +120,9 @@ public class IOUSettleFlow {
 
             Set<AbstractParty> uniqueParties = Stream.concat(allInputParties.stream(),
                                                              allOutputParties.stream()).collect(Collectors.toSet());
-            Set<AbstractParty> confidentialParties = uniqueParties.stream().filter(t ->
+            List<AbstractParty> confidentialParties = uniqueParties.stream().filter(t ->
                     getServiceHub().getNetworkMapCache().getNodesByLegalIdentityKey(t.getOwningKey()).isEmpty())
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
 
             Map<AbstractParty, PartyAndCertificate> partyToCertificateMap = new HashMap<AbstractParty, PartyAndCertificate>();
             for (AbstractParty prty : uniqueParties) {
@@ -132,8 +132,8 @@ public class IOUSettleFlow {
 
             System.out.println("CONFIDENTIAL : " + Arrays.toString(confidentialParties.toArray()));
 
-            List<AbstractParty> partiesRequested =
-                    session.sendAndReceive(new ArrayList<AbstractParty>().getClass(), confidentialParties).unwrap(
+            List<AbstractParty> requestedParties =
+                    session.sendAndReceive(List.class, confidentialParties).unwrap(
                     req -> {
                         System.out.println(" WHAT I GOT " + req);
                         return req;
