@@ -136,7 +136,7 @@ public class IOUSettleFlow {
                     session.sendAndReceive(List.class, confidentialParties).unwrap(req -> {System.out.println(" WHAT I GOT " + req);return req;});
 
             List<PartyAndCertificate> certificatesToSend = new ArrayList<PartyAndCertificate>();
-            for (AbstractParty p : confidentialParties) {
+            for (AbstractParty p : requestedParties) {
                 certificatesToSend.add(partyToCertificateMap.get(p));
             }
             session.send(certificatesToSend);
@@ -194,6 +194,7 @@ public class IOUSettleFlow {
             subFlow(new IdentitySyncFlow.Receive(otherPartyFlow));
 
             TransactionBuilder txb = otherPartyFlow.receive(TransactionBuilder.class).unwrap(data -> {
+                System.out.println("RECEIVED TRANSACTION: data");
                 return data;
             });
 
