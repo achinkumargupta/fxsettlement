@@ -133,11 +133,7 @@ public class IOUSettleFlow {
             System.out.println("CONFIDENTIAL : " + Arrays.toString(confidentialParties.toArray()));
 
             List<AbstractParty> requestedParties =
-                    session.sendAndReceive(List.class, confidentialParties).unwrap(
-                    req -> {
-                        System.out.println(" WHAT I GOT " + req);
-                        return req;
-                    });
+                    session.sendAndReceive(List.class, confidentialParties).unwrap(req -> {System.out.println(" WHAT I GOT " + req);return req;});
 
             List<PartyAndCertificate> certificatesToSend = new ArrayList<PartyAndCertificate>();
             for (AbstractParty p : confidentialParties) {
@@ -146,26 +142,6 @@ public class IOUSettleFlow {
             session.send(certificatesToSend);
 
             session.send(tb);
-
-
-
-
-//            progressTracker.currentStep = SENDING_TRANSACTION_PROPOSAL
-//            session.send(tx)
-
-
-            //getServiceHub().toStateAndRef(tb.inputStates().get(0))
-            //getServiceHub().toStateAndRef(tb.inputStates().get(0)).getState().getData().getParticipants()
-            //tb.outputStates().get(0).getData().getParticipants()
-            //tb.outputStates().get(0).getData().getParticipants().get(0).getOwningKey()
-            //getServiceHub().getNetworkMapCache().getNodesByLegalIdentityKey(tb.outputStates().get(1).getData().getParticipants().get(0).getOwningKey())
-            //getServiceHub().getNetworkMapCache().identityService.certificateFromKey(tb.outputStates().get(0).getData().getParticipants().get(0).getOwningKey())
-            //getServiceHub().getNetworkMapCache().identityService.certificateFromKey(getServiceHub().toStateAndRef(tb.inputStates().get(0)).getState().getData().getParticipants().get(0).getOwningKey())
-            //List<PartyAndCertificate?>
-
-
-
-
 
             keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
             SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, keyList);
@@ -220,7 +196,6 @@ public class IOUSettleFlow {
             TransactionBuilder txb = otherPartyFlow.receive(TransactionBuilder.class).unwrap(data -> {
                 return data;
             });
-
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
