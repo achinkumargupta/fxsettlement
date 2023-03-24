@@ -6,6 +6,7 @@ import net.corda.core.contracts.*;
 import net.corda.core.crypto.SecureHash;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
+import net.corda.core.identity.AbstractParty;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.transactions.SignedTransaction;
@@ -24,12 +25,14 @@ import java.lang.IllegalArgumentException;
 import java.security.PublicKey;
 import java.util.*;
 import net.corda.core.contracts.TransactionResolutionException;
+import net.corda.core.identity.PartyAndCertificate;
 
 import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
 import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.*;
 
 public class IOUSettleFlow {
 
@@ -80,7 +83,8 @@ public class IOUSettleFlow {
             // Step 5. Get some cash from the vault and add a spend to our transaction builder.
             // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
             // generateSpend returns all public keys which have to be used to sign transaction
-            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount, getOurIdentityAndCert(), counterparty).getSecond();
+            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount,
+                    getOurIdentityAndCert(), counterparty).getSecond();
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
@@ -94,19 +98,51 @@ public class IOUSettleFlow {
             tb.verify(getServiceHub());
             FlowSession session = initiateFlow(counterparty);
 
-            subFlow(new SendStateAndRefFlow(session, tb.inputStates().stream()
-                                                                    .map(t-> {try {
-                                                                            return getServiceHub().toStateAndRef(t);
-                                                                        } catch (Exception e) {
-                                                                            throw new RuntimeException(e);
-                                                                        }}).collect(Collectors.toList())));
+            // Sync the StateAndRefs between the nodes
+            subFlow(new SendStateAndRefFlow(session, tb.inputStates().stream().map(t-> {
+                                                try {
+                                                    return getServiceHub().toStateAndRef(t);
+                                                } catch (Exception e) {
+                                                    throw new RuntimeException(e);
+                                                }}).collect(Collectors.toList())));
 
-//            progressTracker.currentStep = SHARING_INPUT_STATES
-//            subFlow(SendStateAndRefFlow(session, tx.inputStates().map { serviceHub.toStateAndRef<ContractState>(it) }))
-//
-//            progressTracker.currentStep = SHARING_ANONYMISED_IDENTITIES
-//            subFlow(IdentitySyncForBuilderFlow.Send(session, tx))
-//
+            // Sync confidential identities between nodes
+            List<AbstractParty> allInputParties = tb.inputStates().stream().flatMap(t-> {
+                                                try {
+                                                    return getServiceHub().toStateAndRef(t).getState().getData().getParticipants().stream();
+                                                } catch (Exception e) {
+                                                    throw new RuntimeException(e);
+                                                }}).collect(Collectors.toList());
+
+            List<AbstractParty> allOutputParties = tb.outputStates().stream()
+                                                                    .flatMap(t -> t.getData().getParticipants().stream())
+                                                                    .collect(Collectors.toList());
+
+            Set<AbstractParty> uniqueParties = Stream.concat(allInputParties.stream(),
+                                                             allOutputParties.stream()).collect(Collectors.toSet());
+            Set<AbstractParty> confidentialParties = uniqueParties.stream().filter(t ->
+                    getServiceHub().getNetworkMapCache().getNodesByLegalIdentityKey(t.getOwningKey()).isEmpty())
+                    .collect(Collectors.toSet());
+
+            Map<AbstractParty, PartyAndCertificate> partyToCertificateMap = new HashMap<AbstractParty, PartyAndCertificate>();
+//            for (AbstractParty prty : uniqueParties) {
+//                partyToCertificateMap.put(prty, getServiceHub().getNetworkMapCache().identityService
+//                        .certificateFromKey(prty.getOwningKey()));
+//            }
+
+            System.out.println("CONFIDENTIAL : " + Arrays.toString(confidentialParties.toArray()));
+            session.sendAndReceive(Object.class, confidentialParties).unwrap(
+                    req -> {System.out.println(" WHAT I GOT " + req);return req;});
+
+//                    UntrustworthyData<Boolean> packet2 = counterpartySession.sendAndReceive(Boolean.class, "You can send and receive any class!");
+//                Boolean bool = packet2.unwrap(data -> {
+//                    // Perform checking on the object received.
+//                    // T O D O: Check the received object.
+//                    // Return the object.
+//                    return data;
+//                });
+
+
 //            progressTracker.currentStep = SENDING_TRANSACTION_PROPOSAL
 //            session.send(tx)
 
@@ -169,6 +205,7 @@ public class IOUSettleFlow {
                 }
             }
 
+            // Recieve and Sync the StateAndRefs between the nodes
             subFlow(new ReceiveStateAndRefFlow<ContractState>(otherPartyFlow));
 
             // Create a sign transaction flows
