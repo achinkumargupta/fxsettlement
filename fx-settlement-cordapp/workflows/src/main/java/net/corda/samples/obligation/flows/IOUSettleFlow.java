@@ -125,22 +125,29 @@ public class IOUSettleFlow {
                     .collect(Collectors.toSet());
 
             Map<AbstractParty, PartyAndCertificate> partyToCertificateMap = new HashMap<AbstractParty, PartyAndCertificate>();
-//            for (AbstractParty prty : uniqueParties) {
-//                partyToCertificateMap.put(prty, getServiceHub().getNetworkMapCache().identityService
-//                        .certificateFromKey(prty.getOwningKey()));
-//            }
+            for (AbstractParty prty : uniqueParties) {
+                partyToCertificateMap.put(prty, getServiceHub().getIdentityService()
+                        .certificateFromKey(prty.getOwningKey()));
+            }
 
             System.out.println("CONFIDENTIAL : " + Arrays.toString(confidentialParties.toArray()));
-            session.sendAndReceive(Object.class, confidentialParties).unwrap(
-                    req -> {System.out.println(" WHAT I GOT " + req);return req;});
 
-//                    UntrustworthyData<Boolean> packet2 = counterpartySession.sendAndReceive(Boolean.class, "You can send and receive any class!");
-//                Boolean bool = packet2.unwrap(data -> {
-//                    // Perform checking on the object received.
-//                    // T O D O: Check the received object.
-//                    // Return the object.
-//                    return data;
-//                });
+            List<AbstractParty> partiesRequested =
+                    session.sendAndReceive(new ArrayList<AbstractParty>().getClass(), confidentialParties).unwrap(
+                    req -> {
+                        System.out.println(" WHAT I GOT " + req);
+                        return req;
+                    });
+
+            List<PartyAndCertificate> certificatesToSend = new ArrayList<PartyAndCertificate>();
+            for (AbstractParty p : confidentialParties) {
+                certificatesToSend.add(partyToCertificateMap.get(p));
+            }
+            session.send(certificatesToSend);
+
+            session.send(tb);
+
+
 
 
 //            progressTracker.currentStep = SENDING_TRANSACTION_PROPOSAL
@@ -207,6 +214,13 @@ public class IOUSettleFlow {
 
             // Recieve and Sync the StateAndRefs between the nodes
             subFlow(new ReceiveStateAndRefFlow<ContractState>(otherPartyFlow));
+
+            subFlow(new IdentitySyncFlow.Receive(otherPartyFlow));
+
+            TransactionBuilder txb = otherPartyFlow.receive(TransactionBuilder.class).unwrap(data -> {
+                return data;
+            });
+
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
