@@ -6,7 +6,6 @@ import net.corda.core.contracts.*;
 import net.corda.core.crypto.SecureHash;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.transactions.SignedTransaction;
@@ -20,19 +19,16 @@ import net.corda.finance.workflows.asset.CashUtils;
 import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
 import net.corda.samples.obligation.states.IOUState.TradeStatus;
-import java.util.stream.Collectors;
+
 import java.lang.IllegalArgumentException;
 import java.security.PublicKey;
 import java.util.*;
-import net.corda.core.contracts.TransactionResolutionException;
-import net.corda.core.identity.PartyAndCertificate;
-import net.corda.core.utilities.UntrustworthyData;
+
 import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
 import java.util.Currency;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.*;
 
 public class IOUSettleFlow {
 
@@ -54,7 +50,7 @@ public class IOUSettleFlow {
 
         @Suspendable
         @Override
-        public SignedTransaction call() throws FlowException, TransactionResolutionException {
+        public SignedTransaction call() throws FlowException {
             // 1. Retrieve the IOU State from the vault using LinearStateQueryCriteria
             List<UUID> listOfLinearIds = Arrays.asList(stateLinearId.getId());
             QueryCriteria queryCriteria = new QueryCriteria.LinearStateQueryCriteria(null, listOfLinearIds);
@@ -83,8 +79,7 @@ public class IOUSettleFlow {
             // Step 5. Get some cash from the vault and add a spend to our transaction builder.
             // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
             // generateSpend returns all public keys which have to be used to sign transaction
-            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount,
-                    getOurIdentityAndCert(), counterparty).getSecond();
+            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount, getOurIdentityAndCert(), counterparty).getSecond();
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
@@ -94,59 +89,13 @@ public class IOUSettleFlow {
             tb.addCommand(command);
             tb.addInputState(inputStateAndRefToSettle);
 
-            // Step 8. Verify the transaction.
+            // Step 8. Verify and sign the transaction.
             tb.verify(getServiceHub());
-            FlowSession session = initiateFlow(counterparty);
-
-            // Sync the StateAndRefs between the nodes
-            subFlow(new SendStateAndRefFlow(session, tb.inputStates().stream().map(t-> {
-                                                try {
-                                                    return getServiceHub().toStateAndRef(t);
-                                                } catch (Exception e) {
-                                                    throw new RuntimeException(e);
-                                                }}).collect(Collectors.toList())));
-
-            // Sync confidential identities between nodes
-            List<AbstractParty> allInputParties = tb.inputStates().stream().flatMap(t-> {
-                                                try {
-                                                    return getServiceHub().toStateAndRef(t).getState().getData().getParticipants().stream();
-                                                } catch (Exception e) {
-                                                    throw new RuntimeException(e);
-                                                }}).collect(Collectors.toList());
-
-            List<AbstractParty> allOutputParties = tb.outputStates().stream()
-                                                                    .flatMap(t -> t.getData().getParticipants().stream())
-                                                                    .collect(Collectors.toList());
-
-            Set<AbstractParty> uniqueParties = Stream.concat(allInputParties.stream(),
-                                                             allOutputParties.stream()).collect(Collectors.toSet());
-            List<AbstractParty> confidentialParties = uniqueParties.stream().filter(t ->
-                    getServiceHub().getNetworkMapCache().getNodesByLegalIdentityKey(t.getOwningKey()).isEmpty())
-                    .collect(Collectors.toList());
-
-            Map<AbstractParty, PartyAndCertificate> partyToCertificateMap = new HashMap<AbstractParty, PartyAndCertificate>();
-            for (AbstractParty prty : uniqueParties) {
-                partyToCertificateMap.put(prty, getServiceHub().getIdentityService()
-                        .certificateFromKey(prty.getOwningKey()));
-            }
-
-            System.out.println("CONFIDENTIAL : " + Arrays.toString(confidentialParties.toArray()));
-
-            List<AbstractParty> requestedParties =
-                    session.sendAndReceive(List.class, confidentialParties).unwrap(req -> {System.out.println(" WHAT I GOT " + req);return req;});
-
-            List<PartyAndCertificate> certificatesToSend = new ArrayList<PartyAndCertificate>();
-            for (AbstractParty p : requestedParties) {
-                certificatesToSend.add(partyToCertificateMap.get(p));
-            }
-            session.send(certificatesToSend);
-
-            session.send(tb);
-
             keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
             SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, keyList);
 
             // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
+            FlowSession session = initiateFlow(counterparty);
             new IdentitySyncFlow.Send(session, ptx.getTx());
 
             SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
@@ -187,16 +136,6 @@ public class IOUSettleFlow {
                     txWeJustSignedId = stx.getId();
                 }
             }
-
-            // Recieve and Sync the StateAndRefs between the nodes
-            subFlow(new ReceiveStateAndRefFlow<ContractState>(otherPartyFlow));
-
-            subFlow(new IdentitySyncFlow.Receive(otherPartyFlow));
-
-            TransactionBuilder txb = otherPartyFlow.receive(TransactionBuilder.class).unwrap(data -> {
-                System.out.println("RECEIVED TRANSACTION: data");
-                return data;
-            });
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
