@@ -123,6 +123,14 @@ public class MainController {
         return myMap;
     }
 
+    @GetMapping(value = "/supported-currencies", produces = APPLICATION_JSON_VALUE)
+    public HashMap<String, List<String>> getSupportedCurrencies() {
+        HashMap<String, List<String>> myMap = new HashMap<>();
+        List<String> nodeNames = Arrays.asList("USD", "EUR", "GBP", "AUD");
+        myMap.put("supportedCurrencies", nodeNames);
+        return myMap;
+    }
+
     @GetMapping(value = "/notaries", produces = TEXT_PLAIN_VALUE)
     private String notaries() {
         return proxy.notaryIdentities().toString();

@@ -1,11 +1,13 @@
 "use strict";
 
-angular.module('demoAppModule').controller('netTradesModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL, peers) {
+angular.module('demoAppModule').controller('netTradesModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL,
+peers, supportedCurrencies) {
     const netTradesModal = this;
 
     netTradesModal.peers = peers;
     netTradesModal.form = {};
     netTradesModal.formError = false;
+    netTradesModal.supportedCurrencies = supportedCurrencies;
 
     /** Validate and create an IOU. */
     netTradesModal.create = () => {

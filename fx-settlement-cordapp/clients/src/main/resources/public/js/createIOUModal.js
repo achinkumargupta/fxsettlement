@@ -1,9 +1,11 @@
 "use strict";
 
-angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL, peers) {
+angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http, $uibModalInstance, $uibModal,
+                                            apiBaseURL, peers, supportedCurrencies) {
     const createIOUModal = this;
 
     createIOUModal.peers = peers;
+    createIOUModal.supportedCurrencies = supportedCurrencies;
     createIOUModal.form = {};
     createIOUModal.formError = false;
 

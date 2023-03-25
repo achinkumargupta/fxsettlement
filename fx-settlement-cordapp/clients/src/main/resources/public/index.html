@@ -86,13 +86,17 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
             <div class="input-group">
                 <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control">
                 <span class="input-group-addon"></span>
-                <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control">
+                <select ng-model="createIOUModal.form.tradedCurrency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in createIOUModal.supportedCurrencies">
+                </select>
             </div>
             <label class="control-label">Counter Asset:</label>
             <div class="input-group">
                 <input type="text" ng-model="createIOUModal.form.counterAmount" class="form-control">
                 <span class="input-group-addon"></span>
-                <input type="text" ng-model="createIOUModal.form.counterCurrency" class="form-control">
+                <select ng-model="createIOUModal.form.counterCurrency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in createIOUModal.supportedCurrencies">
+                </select>
             </div>
             <div ng-show="createIOUModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
@@ -129,9 +133,13 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
             </div>
             <label class="control-label">Currency Pair:</label>
             <div class="input-group">
-                    <input type="text" ng-model="netTradesModal.form.currencyA" class="form-control">
+                <select ng-model="netTradesModal.form.currencyA" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in netTradesModal.supportedCurrencies">
+                </select>
                     <span class="input-group-addon"></span>
-                    <input type="text" ng-model="netTradesModal.form.currencyB" class="form-control">
+                <select ng-model="netTradesModal.form.currencyB" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in netTradesModal.supportedCurrencies">
+                </select>
             </div>
             <div ng-show="netTradesModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
@@ -156,13 +164,16 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <script type="text/ng-template" id="issueCashModal.html">
     <div class="modal-header">
-        <h4 class="modal-title">Self-issue cash</h4>
+        <h4 class="modal-title">Issue cash</h4>
     </div>
     <form>
         <div class="modal-body">
             <div class="form-group">
                 <label for="issueCashCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="issueCashModal.form.currency" class="form-control" id="issueCashCurrency">
+                <select ng-model="issueCashModal.form.currency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in issueCashModal.supportedCurrencies"
+                        id="issueCashCurrency">
+                </select>
             </div>
             <div class="form-group">
                 <label for="issueCashAmount" class="control-label">Amount:</label>
