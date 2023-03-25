@@ -54,7 +54,10 @@ angular.module('demoAppModule').controller('netTradesModalCtrl', function($http,
     // Validates the IOU.
     function invalidFormInput() {
          // TODO more validations here
-        return (netTradesModal.form.counterparty === undefined);
+        return (netTradesModal.form.counterparty === undefined) ||
+        (netTradesModal.form.currencyA === netTradesModal.form.currencyB) ||
+        (netTradesModal.form.currencyA.length != 3) ||
+        (netTradesModal.form.currencyB.length != 3);
     }
 });
 

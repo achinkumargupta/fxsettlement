@@ -55,16 +55,19 @@ angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http,
 
     // Validates the IOU.
     function invalidFormInput() {
-        // TODO put more validations here
        const valueDate = createIOUModal.form.valueDate;
                 const counterparty = createIOUModal.form.counterparty;
                 const tradedAmount = createIOUModal.form.tradedAmount;
                 const tradedCurrency = createIOUModal.form.tradedCurrency;
                 const counterAmount = createIOUModal.form.counterAmount;
                 const counterCurrency = createIOUModal.form.counterCurrency;
+
         return isNaN(createIOUModal.form.tradedAmount) ||
                     (createIOUModal.form.counterparty === undefined) ||
-                    isNaN(createIOUModal.form.counterAmount);
+                    isNaN(createIOUModal.form.counterAmount) ||
+                    (createIOUModal.form.tradedCurrency === createIOUModal.form.counterCurrency) ||
+                    (createIOUModal.form.counterCurrency.length != 3) ||
+                    (createIOUModal.form.tradedCurrency.length != 3);
     }
 });
 

@@ -66,27 +66,39 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         ng-options="peer as peer for peer in createIOUModal.peers">
                 </select>
             </div>
-            <div class="form-group">
-                <label for="tradedAssetAmount" class="control-label">Traded Asset Amount:</label>
-                <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control" id="tradedAssetAmount">
+<!--            <div class="form-group">-->
+<!--                <label for="tradedAssetAmount" class="control-label">Traded Asset Amount:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control" id="tradedAssetAmount">-->
+<!--            </div>-->
+<!--           <div class="form-group">-->
+<!--                <label for="tradedAssetCurrency" class="control-label">Traded Asset Currency:</label>-->
+<!--               <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control" id="tradedAssetCurrency">-->
+<!--           </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="counterAssetAmount" class="control-label">Counter Asset Amount:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.counterAmount" class="form-control" id="counterAssetAmount">-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="counterAssetCurrency" class="control-label">Counter Asset Currency:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.counterCurrency" class="form-control" id="counterAssetCurrency">-->
+<!--            </div>-->
+            <label class="control-label">Traded Asset:</label>
+            <div class="input-group">
+                <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control">
+                <span class="input-group-addon"></span>
+                <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control">
             </div>
-            <div class="form-group">
-                <label for="tradedAssetCurrency" class="control-label">Traded Asset Currency:</label>
-                <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control" id="tradedAssetCurrency">
-            </div>
-            <div class="form-group">
-                <label for="counterAssetAmount" class="control-label">Counter Asset Amount:</label>
-                <input type="text" ng-model="createIOUModal.form.counterAmount" class="form-control" id="counterAssetAmount">
-            </div>
-            <div class="form-group">
-                <label for="counterAssetCurrency" class="control-label">Counter Asset Currency:</label>
-                <input type="text" ng-model="createIOUModal.form.counterCurrency" class="form-control" id="counterAssetCurrency">
+            <label class="control-label">Counter Asset:</label>
+            <div class="input-group">
+                <input type="text" ng-model="createIOUModal.form.counterAmount" class="form-control">
+                <span class="input-group-addon"></span>
+                <input type="text" ng-model="createIOUModal.form.counterCurrency" class="form-control">
             </div>
             <div ng-show="createIOUModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
-                    Enter valid IOU creation parameters
+                    Enter valid Record Trade form parameters
                 </div>
             </div>
         </div>
@@ -116,20 +128,11 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                 </select>
             </div>
             <label class="control-label">Currency Pair:</label>
-                <div class="input-group">
+            <div class="input-group">
                     <input type="text" ng-model="netTradesModal.form.currencyA" class="form-control">
                     <span class="input-group-addon"></span>
                     <input type="text" ng-model="netTradesModal.form.currencyB" class="form-control">
             </div>
-<!--            -->
-<!--            <div class="form-group">-->
-<!--                <label for="currA" class="control-label">Currency A:</label>-->
-<!--                <input type="text" ng-model="netTradesModal.form.currencyA" class="form-control" id="currA">-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                <label for="currB" class="control-label">Currency B:</label>-->
-<!--                <input type="text" ng-model="netTradesModal.form.currencyB" class="form-control" id="currB">-->
-<!--            </div>-->
             <div ng-show="netTradesModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -162,14 +165,14 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                 <input type="text" ng-model="issueCashModal.form.currency" class="form-control" id="issueCashCurrency">
             </div>
             <div class="form-group">
-                <label for="issueCashAmount" class="control-label">Amount (Int):</label>
+                <label for="issueCashAmount" class="control-label">Amount:</label>
                 <input type="text" ng-model="issueCashModal.form.amount" class="form-control" id="issueCashAmount">
             </div>
             <div ng-show="issueCashModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
-                    Enter valid cash issuance parameters.
+                    Enter valid Issue cash form parameters.
                 </div>
             </div>
         </div>
@@ -225,7 +228,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     </div>
     <form>
         <div class="modal-body">
-            <p>Are you sure to proceed with settlement?</p>
+            <p>Are you sure to proceed with this trade settlement?</p>
         </div>
         <div class="modal-footer">
             <button ng-click="settleModal.cancel()" type="button" class="btn btn-default">Cancel</button>
