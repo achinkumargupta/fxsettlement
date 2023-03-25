@@ -57,6 +57,7 @@ public class IOUSettleFlow {
             Vault.Page results = getServiceHub().getVaultService().queryBy(IOUState.class, queryCriteria);
             StateAndRef inputStateAndRefToSettle = (StateAndRef) results.getStates().get(0);
             IOUState inputStateToSettle = (IOUState) ((StateAndRef) results.getStates().get(0)).getState().getData();
+            Date valueDate = inputStateToSettle.valueDate;
             Party counterparty = inputStateToSettle.counterParty;
             Party tradingParty = inputStateToSettle.tradingParty;
             Amount<Currency> tradedAssetAmount = inputStateToSettle.tradedAssetAmount;
@@ -69,7 +70,10 @@ public class IOUSettleFlow {
             // Obtain a reference to a notary we wish to use.
             Party notary = inputStateAndRefToSettle.getState().getNotary();
             TransactionBuilder tb = new TransactionBuilder(notary);
-
+            System.out.println(valueDate + ": :: " + new Date());
+            if (!valueDate.equals(new Date())) {
+                throw new IllegalArgumentException("Can only settle trades with Value date as today.");
+            }
             // Step 4. Check we have enough cash to settle the requested amount.
             final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), (Currency) tradedAssetAmount.getToken());
             if (cashBalance.getQuantity() < tradedAssetAmount.getQuantity()) {

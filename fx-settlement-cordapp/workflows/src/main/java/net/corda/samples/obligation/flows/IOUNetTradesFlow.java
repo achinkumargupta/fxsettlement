@@ -67,6 +67,9 @@ public class IOUNetTradesFlow {
             for (Object stateToSettle : allResults.getStates()) {
                 IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
 
+                if (!inputStateToSettle.getValueDate().equals(new Date())) {
+                    continue;
+                }
                 if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
                         !inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
                     continue;
@@ -134,7 +137,7 @@ public class IOUNetTradesFlow {
 
             // Step 2. Check the party running this flows is the borrower.
             if (validInputStatesToSettle.isEmpty()) {
-                throw new IllegalArgumentException("There are no trades to settle for party " + netAgainstParty);
+                throw new IllegalArgumentException("There are no trades with value date as today to settle for party " + netAgainstParty);
             }
 
             System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
