@@ -20,6 +20,9 @@ import net.corda.samples.obligation.states.IOUState;
 import static net.corda.samples.obligation.contracts.IOUContract.Commands.*;
 import net.corda.core.identity.CordaX500Name;
 
+import java.text.*;
+import java.util.*;
+import java.text.SimpleDateFormat;
 /**
  * This is the flows which handles issuance of new IOUs on the ledger.
  * Gathering the counterparty's signature is handled by the [CollectSignaturesFlow].
@@ -32,13 +35,24 @@ public class IOUIssueFlow {
     @StartableByRPC
     public static class InitiatorFlow extends FlowLogic<SignedTransaction> {
         private final IOUState state;
+
+        private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
         public InitiatorFlow(IOUState state) {
             this.state = state;
+            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         }
 
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
+            // Create a new IOU states using the parameters given.
+            try {
+                if (state.getValueDate().compareTo(df.parse(df.format(new Date()))) < 0) {
+                    throw new IllegalArgumentException("Can't record trade with value date that is prior to today");
+                }
+            } catch (ParseException e) {}
+
             // Step 1. Get a reference to the notary service on our network and our key pair.
             /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
             final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));

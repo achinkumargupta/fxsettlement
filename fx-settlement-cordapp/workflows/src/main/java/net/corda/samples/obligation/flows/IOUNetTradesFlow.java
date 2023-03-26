@@ -23,6 +23,7 @@ import net.corda.finance.workflows.asset.CashUtils;
 
 import java.util.*;
 import java.security.PublicKey;
+import java.text.SimpleDateFormat;
 
 import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
@@ -46,10 +47,13 @@ public class IOUNetTradesFlow {
         private final Currency currencyA;
         private final Currency currencyB;
 
+        private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
         public InitiatorFlow(Currency currencyA, Currency currencyB, Party netAgainstParty) {
             this.currencyA = currencyA;
             this.currencyB = currencyB;
             this.netAgainstParty = netAgainstParty;
+            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         }
 
         @Suspendable
@@ -67,7 +71,7 @@ public class IOUNetTradesFlow {
             for (Object stateToSettle : allResults.getStates()) {
                 IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
 
-                if (!inputStateToSettle.getValueDate().equals(new Date())) {
+                if (!df.format(inputStateToSettle.getValueDate()).equals(df.format(new Date()))) {
                     continue;
                 }
                 if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
@@ -82,14 +86,6 @@ public class IOUNetTradesFlow {
                         !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
                     continue;
                 }
-
-                System.out.println("Matched in block 1 -- state " + inputStateToSettle.getCounterParty() +
-                        " :: " + netAgainstParty.getOwningKey() + " ISa:: " +
-                        inputStateToSettle.getTradedAssetType().getCurrencyCode()  + " ISb:: " +
-                        inputStateToSettle.getCounterAssetType().getCurrencyCode() + " CurA:: " +
-                        currencyA.getCurrencyCode() + " CurB:: " + currencyB.getCurrencyCode()
-                        + " Amount: " + inputStateToSettle.getTradedAssetAmount().getQuantity());
-
 
                 // This means tradingAmount has to be reduced from our account
                 if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
@@ -129,8 +125,6 @@ public class IOUNetTradesFlow {
                 }
             }
 
-            System.out.println("Net Spend A: "+ netSpendForCurrencyA + " " + currencyA.getCurrencyCode() + " :: "
-                    + "Net Spend b : " + netSpendForCurrencyB + " " + currencyB.getCurrencyCode());
             // Step 1. Get a reference to the notary service on our network and our key pair.
             /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
             final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));

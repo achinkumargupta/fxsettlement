@@ -217,11 +217,15 @@ public class MainController {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(counterparty))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
+
         // Create a new IOU states using the parameters given.
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+
         try {
             IOUState state = new IOUState(
                     new Date(),
-                    new SimpleDateFormat("yyyy-MM-dd").parse(valueDate),
+                    df.parse(valueDate),
                     new Amount<>((long) tradedAmount * 100, Currency.getInstance(tradedCurrency)),
                     Currency.getInstance(tradedCurrency),
                     me,

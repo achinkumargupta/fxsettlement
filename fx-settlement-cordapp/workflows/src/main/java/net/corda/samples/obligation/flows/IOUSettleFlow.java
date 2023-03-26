@@ -20,6 +20,7 @@ import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
 import net.corda.samples.obligation.states.IOUState.TradeStatus;
 
+import java.text.SimpleDateFormat;
 import java.lang.IllegalArgumentException;
 import java.security.PublicKey;
 import java.util.*;
@@ -44,8 +45,11 @@ public class IOUSettleFlow {
 
         private final UniqueIdentifier stateLinearId;
 
+        private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
         public InitiatorFlow(UniqueIdentifier stateLinearId) {
             this.stateLinearId = stateLinearId;
+            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
         }
 
         @Suspendable
@@ -70,10 +74,12 @@ public class IOUSettleFlow {
             // Obtain a reference to a notary we wish to use.
             Party notary = inputStateAndRefToSettle.getState().getNotary();
             TransactionBuilder tb = new TransactionBuilder(notary);
-            System.out.println(valueDate + ": :: " + new Date());
-            if (!valueDate.equals(new Date())) {
+
+            System.out.println(df.format(valueDate) + ": :: " + df.format(new Date()));
+            if (!df.format(valueDate).equals(df.format(new Date()))) {
                 throw new IllegalArgumentException("Can only settle trades with Value date as today.");
             }
+
             // Step 4. Check we have enough cash to settle the requested amount.
             final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), (Currency) tradedAssetAmount.getToken());
             if (cashBalance.getQuantity() < tradedAssetAmount.getQuantity()) {
