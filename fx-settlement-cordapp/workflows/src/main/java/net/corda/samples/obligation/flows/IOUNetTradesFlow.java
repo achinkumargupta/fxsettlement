@@ -53,7 +53,7 @@ public class IOUNetTradesFlow {
             this.currencyA = currencyA;
             this.currencyB = currencyB;
             this.netAgainstParty = netAgainstParty;
-            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
 
         @Suspendable

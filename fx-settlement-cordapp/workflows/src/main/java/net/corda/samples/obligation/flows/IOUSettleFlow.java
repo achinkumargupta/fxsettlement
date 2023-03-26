@@ -49,7 +49,7 @@ public class IOUSettleFlow {
 
         public InitiatorFlow(UniqueIdentifier stateLinearId) {
             this.stateLinearId = stateLinearId;
-            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
 
         @Suspendable

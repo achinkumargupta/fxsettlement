@@ -40,7 +40,7 @@ public class IOUIssueFlow {
 
         public InitiatorFlow(IOUState state) {
             this.state = state;
-            df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
         }
 
         @Suspendable
@@ -71,11 +71,9 @@ public class IOUIssueFlow {
             builder.addOutputState(state, IOUContract.IOU_CONTRACT_ID);
             builder.addCommand(issueCommand);
 
-
             // Step 5. Verify and sign it with our KeyPair.
             builder.verify(getServiceHub());
             final SignedTransaction ptx = getServiceHub().signInitialTransaction(builder);
-
 
             // Step 6. Collect the other party's signature using the SignTransactionFlow.
             List<Party> otherParties = state.getParticipants()

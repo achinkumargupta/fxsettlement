@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import javax.annotation.PostConstruct;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +54,7 @@ public class MainController {
     public MainController(NodeRPCConnection rpc) {
         this.proxy = rpc.getProxy();
         this.me = proxy.nodeInfo().getLegalIdentities().get(0).getName();
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     }
 
     /** Helpers for filtering the network map cache. */
@@ -220,7 +221,7 @@ public class MainController {
 
         // Create a new IOU states using the parameters given.
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        df.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         try {
             IOUState state = new IOUState(
