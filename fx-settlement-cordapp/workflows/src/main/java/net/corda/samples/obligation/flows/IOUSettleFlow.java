@@ -20,6 +20,7 @@ import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
 import net.corda.samples.obligation.states.IOUState.TradeStatus;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.lang.IllegalArgumentException;
 import java.security.PublicKey;
@@ -69,13 +70,14 @@ public class IOUSettleFlow {
             Currency tradedAssetType = inputStateToSettle.tradedAssetType;
             Currency counterAssetType = inputStateToSettle.counterAssetType;
             TradeStatus tradeStatus = inputStateToSettle.tradeStatus;
-
-            generateCashInstructions(inputStateToSettle);
+            Party notary = inputStateAndRefToSettle.getState().getNotary();
+            TransactionBuilder tb = new TransactionBuilder(notary);
+            generateCashInstructions(inputStateToSettle,tb);
 
             // Step 2. Create a transaction builder.
             // Obtain a reference to a notary we wish to use.
-            Party notary = inputStateAndRefToSettle.getState().getNotary();
-            TransactionBuilder tb = new TransactionBuilder(notary);
+
+
 
             System.out.println(df.format(valueDate) + ": :: " + df.format(new Date()));
             if (!df.format(valueDate).equals(df.format(new Date()))) {
@@ -118,15 +120,17 @@ public class IOUSettleFlow {
             return subFlow(new FinalityFlow(fullySignedTransaction, session));
         }
 
-        private void generateCashInstructions(IOUState inputStateToSettle) {
+        private void generateCashInstructions(IOUState inputStateToSettle, TransactionBuilder tb) {
             //((Cash.State) getServiceHub().getVaultService().queryBy(Cash.State.class).getStates().get(0).getState().getData()).getAmount()
             Vault.Page results = getServiceHub().getVaultService().queryBy(Cash.State.class);
             List<StateAndRef> inputStateAndRefToSettle = results.getStates();
             Cash.State tokenCash = null;
+            StateAndRef inputRef = null;
             for (StateAndRef srf : inputStateAndRefToSettle) {
                 if (((Cash.State) srf.getState().getData()).getAmount().getToken()
                         .getProduct().equals(inputStateToSettle.getTradedAssetType())) {
                     tokenCash = (Cash.State) srf.getState().getData();
+                    inputRef = srf;
                 }
             }
             if (tokenCash == null) {
@@ -138,10 +142,20 @@ public class IOUSettleFlow {
                         " to settle with the trade.");
             }
 //tokenCash.getAmount().getToken().getIssuer()
-            Cash.State tokenCashAfterTransfer = tokenCash.copy(
-                    tokenCash.getAmount().minus(inputStateToSettle.getTradedAssetAmount()),
+//            Cash.State tokenCashAfterTransfer = tokenCash.copy(
+//                    tokenCash.getAmount().minus(inputStateToSettle.getTradedAssetAmount()),
+//                    inputStateToSettle.getTradingParty());
+//
+//Issued<Currency> c = new Issued<Currency>();
+
+            //BigDecimal newamt = tokenCash.getAmount().toDecimal().subtract(inputStateToSettle.getTradedAssetAmount().toDecimal());
+            //Cash.State tokenCashAfterTransfer = new Cash.State();
+            Issued<Currency> issuedCurrency = new Issued<Currency>(getOurIdentity().ref(),inputStateToSettle.getTradedAssetType());
+            Amount<Issued<Currency>> tradedAssetAmount = new Amount<Issued<Currency>>(inputStateToSettle.getTradedAssetAmount().getQuantity(),issuedCurrency);
+            Cash.State tokenCashAfterTransfer = tokenCash.copy(tokenCash.getAmount().minus(tradedAssetAmount),
                     inputStateToSettle.getTradingParty());
-Issued<Currency> c = new Issued<Currency>();
+            tb.addInputState(inputRef);
+            tb.addOutputState(tokenCashAfterTransfer);
 
             System.out.println(inputStateAndRefToSettle + " " + tokenCash);
         }
