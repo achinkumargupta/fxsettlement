@@ -9,6 +9,7 @@ import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
+import net.corda.core.serialization.ConstructorForDeserialization;
 import net.corda.core.serialization.CordaSerializable;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
@@ -88,6 +89,15 @@ public class IOUSettleFlow {
                 System.out.println("Received Initiator CounterParty Data:" + data);
                 return data;
             });
+            if (counterPartyCashCommands.getError() != null) {
+                throw new RuntimeException(counterPartyCashCommands.getError());
+            }
+
+            tb.addInputState(counterPartyCashCommands.getInputStateAndRef());
+            for (Cash.State outputState: counterPartyCashCommands.getOutputStates()) {
+                tb.addOutputState(outputState);
+            }
+            tb.addCommand(counterPartyCashCommands.getCommand(), counterPartyCashCommands.getKeys());
 
             // Generate Cash Transfer Commands
             CounterPartySpendHolder mySpends =
@@ -97,17 +107,15 @@ public class IOUSettleFlow {
                                          inputStateToSettle.getTradingParty(),
                                          inputStateToSettle.getCounterParty());
 
+            if (mySpends.getError() != null) {
+                throw new RuntimeException(mySpends.getError());
+            }
+
             tb.addInputState(mySpends.getInputStateAndRef());
             for (Cash.State outputState: mySpends.getOutputStates()) {
                 tb.addOutputState(outputState);
             }
             tb.addCommand(mySpends.getCommand(), mySpends.getKeys());
-
-            // Step 4. Check we have enough cash to settle the requested amount.
-            final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), (Currency) tradedAssetAmount.getToken());
-            if (cashBalance.getQuantity() < tradedAssetAmount.getQuantity()) {
-                throw new IllegalArgumentException("Not enough cash in " + tradedAssetType + " to settle with the trade.");
-            }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
@@ -148,15 +156,15 @@ public class IOUSettleFlow {
                 inputRef = srf;
             }
         }
-
         if (inputRef == null) {
-            throw new RuntimeException("Unable to find the Cash State associated with Asset Type :" + assetType);
+            return new CounterPartySpendHolder("Unable to find the any Cash for " + assetType +
+                    " with party " + tradingParty.getName().getOrganisation());
         }
-        Cash.State tokenCash = (Cash.State) inputRef.getState().getData();
 
+        Cash.State tokenCash = (Cash.State) inputRef.getState().getData();
         if (tokenCash.getAmount().getQuantity() < assetAmount.getQuantity()) {
-            throw new IllegalArgumentException("Not enough cash in " + assetType +
-                    " to settle with the trade.");
+            return new CounterPartySpendHolder("Not enough cash in " + assetType +
+                    " with party " + tradingParty.getName().getOrganisation() + " to settle with the trade.");
         }
 
         Issued<Currency> issuedCurrency = new Issued<Currency>(tokenCash.getAmount().getToken().getIssuer(),
@@ -181,12 +189,23 @@ public class IOUSettleFlow {
         private final List<Cash.State> outputStates;
         private final CommandData command;
         private final List<PublicKey> keys;
+        private final String error;
+
+        public CounterPartySpendHolder(String error) {
+            this(null, null, null, null, error);
+        }
 
         public CounterPartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command, List<PublicKey> keys) {
+            this(inputStateAndRef, outputStates, command, keys, null);
+        }
+
+        @ConstructorForDeserialization
+        public CounterPartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command, List<PublicKey> keys, String error) {
             this.inputStateAndRef = inputStateAndRef;
             this.outputStates = outputStates;
             this.command = command;
             this.keys = keys;
+            this.error = error;
         }
 
         public StateAndRef getInputStateAndRef() {
@@ -203,6 +222,10 @@ public class IOUSettleFlow {
 
         public List<PublicKey> getKeys() {
             return keys;
+        }
+
+        public String getError() {
+            return error;
         }
     }
 
