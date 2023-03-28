@@ -90,11 +90,6 @@ public class IOUSettleFlow {
                 throw new IllegalArgumentException("Not enough cash in " + tradedAssetType + " to settle with the trade.");
             }
 
-            // Step 5. Get some cash from the vault and add a spend to our transaction builder.
-            // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
-            // generateSpend returns all public keys which have to be used to sign transaction
-            List<PublicKey> keyList = CashUtils.generateSpend(getServiceHub(), tb, tradedAssetAmount, getOurIdentityAndCert(), counterparty).getSecond();
-
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
                     new IOUContract.Commands.Settle(),
@@ -105,8 +100,7 @@ public class IOUSettleFlow {
 
             // Step 8. Verify and sign the transaction.
             tb.verify(getServiceHub());
-            keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
-            SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, keyList);
+            SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, Arrays.asList(getOurIdentity().getOwningKey()));
 
             // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
             FlowSession session = initiateFlow(counterparty);
@@ -121,48 +115,68 @@ public class IOUSettleFlow {
         }
 
         private void generateCashInstructions(IOUState inputStateToSettle, TransactionBuilder tb) {
-            //((Cash.State) getServiceHub().getVaultService().queryBy(Cash.State.class).getStates().get(0).getState().getData()).getAmount()
             Vault.Page results = getServiceHub().getVaultService().queryBy(Cash.State.class);
             List<StateAndRef> inputStateAndRefToSettle = results.getStates();
-            Cash.State tokenCash = null;
             StateAndRef inputRef = null;
             for (StateAndRef srf : inputStateAndRefToSettle) {
                 if (((Cash.State) srf.getState().getData()).getAmount().getToken()
                         .getProduct().equals(inputStateToSettle.getTradedAssetType())) {
-                    tokenCash = (Cash.State) srf.getState().getData();
                     inputRef = srf;
                 }
             }
-            if (tokenCash == null) {
+
+            if (inputRef == null) {
                 throw new RuntimeException("Unable to find the Cash State associated with Asset Type :" + inputStateToSettle.getTradedAssetType());
             }
+            Cash.State tokenCash = (Cash.State) inputRef.getState().getData();
 
             if (tokenCash.getAmount().getQuantity() < inputStateToSettle.getTradedAssetAmount().getQuantity()) {
                 throw new IllegalArgumentException("Not enough cash in " + inputStateToSettle.getTradedAssetType() +
                         " to settle with the trade.");
             }
-//tokenCash.getAmount().getToken().getIssuer()
-//            Cash.State tokenCashAfterTransfer = tokenCash.copy(
-//                    tokenCash.getAmount().minus(inputStateToSettle.getTradedAssetAmount()),
-//                    inputStateToSettle.getTradingParty());
-//
-//Issued<Currency> c = new Issued<Currency>();
 
-            //BigDecimal newamt = tokenCash.getAmount().toDecimal().subtract(inputStateToSettle.getTradedAssetAmount().toDecimal());
-            //Cash.State tokenCashAfterTransfer = new Cash.State();
-            Issued<Currency> issuedCurrency = new Issued<Currency>(getOurIdentity().ref(),inputStateToSettle.getTradedAssetType());
-            Amount<Issued<Currency>> tradedAssetAmount = new Amount<Issued<Currency>>(inputStateToSettle.getTradedAssetAmount().getQuantity(),issuedCurrency);
+            Issued<Currency> issuedCurrency = new Issued<Currency>(tokenCash.getAmount().getToken().getIssuer(),
+                    inputStateToSettle.getTradedAssetType());
+            Amount<Issued<Currency>> tradedAssetAmount = new Amount<Issued<Currency>>(inputStateToSettle.getTradedAssetAmount().getQuantity(),
+                    issuedCurrency);
+
             Cash.State tokenCashAfterTransfer = tokenCash.copy(tokenCash.getAmount().minus(tradedAssetAmount),
                     inputStateToSettle.getTradingParty());
+            Cash.State tokenCashForPartyBAfterTransfer = tokenCash.copy(tradedAssetAmount,
+                    inputStateToSettle.getCounterParty());
+
             tb.addInputState(inputRef);
             tb.addOutputState(tokenCashAfterTransfer);
+            tb.addOutputState(tokenCashForPartyBAfterTransfer);
 
-            System.out.println(inputStateAndRefToSettle + " " + tokenCash);
+            tb.addCommand(new Cash.Commands.Move(),
+                    Arrays.asList(getOurIdentity().getOwningKey(),
+                    inputStateToSettle.getCounterParty().getOwningKey()));
         }
 
-//        private class Holder {
-//            private
-//        }
+        private class CounterpartySpendHolder {
+            private final StateAndRef inputStateAndRef;
+            private final List<Cash.State> outputStates;
+            private final CommandData command;
+
+            public CounterpartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command) {
+                this.inputStateAndRef = inputStateAndRef;
+                this.outputStates = outputStates;
+                this.command = command;
+            }
+
+            public StateAndRef getInputStateAndRef() {
+                return inputStateAndRef;
+            }
+
+            public List<Cash.State> getOutputStates() {
+                return outputStates;
+            }
+
+            public CommandData getCommand() {
+                return command;
+            }
+        }
     }
 
     /**
