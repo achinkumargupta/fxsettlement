@@ -70,6 +70,8 @@ public class IOUSettleFlow {
             Currency counterAssetType = inputStateToSettle.counterAssetType;
             TradeStatus tradeStatus = inputStateToSettle.tradeStatus;
 
+            generateCashInstructions(inputStateToSettle);
+
             // Step 2. Create a transaction builder.
             // Obtain a reference to a notary we wish to use.
             Party notary = inputStateAndRefToSettle.getState().getNotary();
@@ -116,6 +118,37 @@ public class IOUSettleFlow {
             return subFlow(new FinalityFlow(fullySignedTransaction, session));
         }
 
+        private void generateCashInstructions(IOUState inputStateToSettle) {
+            //((Cash.State) getServiceHub().getVaultService().queryBy(Cash.State.class).getStates().get(0).getState().getData()).getAmount()
+            Vault.Page results = getServiceHub().getVaultService().queryBy(Cash.State.class);
+            List<StateAndRef> inputStateAndRefToSettle = results.getStates();
+            Cash.State tokenCash = null;
+            for (StateAndRef srf : inputStateAndRefToSettle) {
+                if (((Cash.State) srf.getState().getData()).getAmount().getToken()
+                        .getProduct().equals(inputStateToSettle.getTradedAssetType())) {
+                    tokenCash = (Cash.State) srf.getState().getData();
+                }
+            }
+            if (tokenCash == null) {
+                throw new RuntimeException("Unable to find the Cash State associated with Asset Type :" + inputStateToSettle.getTradedAssetType());
+            }
+
+            if (tokenCash.getAmount().getQuantity() < inputStateToSettle.getTradedAssetAmount().getQuantity()) {
+                throw new IllegalArgumentException("Not enough cash in " + inputStateToSettle.getTradedAssetType() +
+                        " to settle with the trade.");
+            }
+//tokenCash.getAmount().getToken().getIssuer()
+            Cash.State tokenCashAfterTransfer = tokenCash.copy(
+                    tokenCash.getAmount().minus(inputStateToSettle.getTradedAssetAmount()),
+                    inputStateToSettle.getTradingParty());
+Issued<Currency> c = new Issued<Currency>();
+
+            System.out.println(inputStateAndRefToSettle + " " + tokenCash);
+        }
+
+//        private class Holder {
+//            private
+//        }
     }
 
     /**
