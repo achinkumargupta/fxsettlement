@@ -8,6 +8,7 @@ import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
+import net.corda.core.serialization.CordaSerializable;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
@@ -15,15 +16,13 @@ import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.contracts.asset.Cash;
 import net.corda.finance.flows.AbstractCashFlow;
 import net.corda.finance.flows.CashIssueFlow;
-import net.corda.finance.workflows.asset.CashUtils;
 import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
 import net.corda.samples.obligation.states.IOUState.TradeStatus;
+import net.corda.core.utilities.UntrustworthyData;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.lang.IllegalArgumentException;
-import java.security.PublicKey;
 import java.util.*;
 
 import static net.corda.finance.workflows.GetBalances.getCashBalance;
@@ -63,23 +62,31 @@ public class IOUSettleFlow {
             StateAndRef inputStateAndRefToSettle = (StateAndRef) results.getStates().get(0);
             IOUState inputStateToSettle = (IOUState) ((StateAndRef) results.getStates().get(0)).getState().getData();
             Date valueDate = inputStateToSettle.valueDate;
-            Party counterparty = inputStateToSettle.counterParty;
+            Party counterParty = inputStateToSettle.counterParty;
             Party tradingParty = inputStateToSettle.tradingParty;
             Amount<Currency> tradedAssetAmount = inputStateToSettle.tradedAssetAmount;
             Amount<Currency> counterAssetAmount = inputStateToSettle.counterAssetAmount;
             Currency tradedAssetType = inputStateToSettle.tradedAssetType;
             Currency counterAssetType = inputStateToSettle.counterAssetType;
             TradeStatus tradeStatus = inputStateToSettle.tradeStatus;
+
             Party notary = inputStateAndRefToSettle.getState().getNotary();
             TransactionBuilder tb = new TransactionBuilder(notary);
-            generateCashInstructions(inputStateToSettle,tb);
 
-            // Step 2. Create a transaction builder.
-            // Obtain a reference to a notary we wish to use.
+            FlowSession session = initiateFlow(counterParty);
 
+            // Retrieve counter party's Cash Transfer Commands
+            UntrustworthyData<CounterPartySpendHolder> counterPartySpendHolder =
+                    session.sendAndReceive(CounterPartySpendHolder.class, inputStateAndRefToSettle);
 
+            CounterPartySpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+                System.out.println("Received Initiator counterparty data:" + data);
+                return data;
+            });
 
-            System.out.println(df.format(valueDate) + ": :: " + df.format(new Date()));
+            // Generate Cash Transfer Commands
+            generateCashCommands(inputStateToSettle, tb);
+
             if (!df.format(valueDate).equals(df.format(new Date()))) {
                 throw new IllegalArgumentException("Can only settle trades with Value date as today.");
             }
@@ -93,7 +100,7 @@ public class IOUSettleFlow {
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(
                     new IOUContract.Commands.Settle(),
-                    Arrays.asList(counterparty.getOwningKey(),getOurIdentity().getOwningKey())
+                    Arrays.asList(counterParty.getOwningKey(),getOurIdentity().getOwningKey())
             );
             tb.addCommand(command);
             tb.addInputState(inputStateAndRefToSettle);
@@ -103,7 +110,6 @@ public class IOUSettleFlow {
             SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, Arrays.asList(getOurIdentity().getOwningKey()));
 
             // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
-            FlowSession session = initiateFlow(counterparty);
             new IdentitySyncFlow.Send(session, ptx.getTx());
 
             SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
@@ -114,7 +120,7 @@ public class IOUSettleFlow {
             return subFlow(new FinalityFlow(fullySignedTransaction, session));
         }
 
-        private void generateCashInstructions(IOUState inputStateToSettle, TransactionBuilder tb) {
+        private void generateCashCommands(IOUState inputStateToSettle, TransactionBuilder tb) {
             Vault.Page results = getServiceHub().getVaultService().queryBy(Cash.State.class);
             List<StateAndRef> inputStateAndRefToSettle = results.getStates();
             StateAndRef inputRef = null;
@@ -153,29 +159,30 @@ public class IOUSettleFlow {
                     Arrays.asList(getOurIdentity().getOwningKey(),
                     inputStateToSettle.getCounterParty().getOwningKey()));
         }
+    }
 
-        private class CounterpartySpendHolder {
-            private final StateAndRef inputStateAndRef;
-            private final List<Cash.State> outputStates;
-            private final CommandData command;
+    @CordaSerializable
+    private static class CounterPartySpendHolder {
+        private final StateAndRef inputStateAndRef;
+        private final List<Cash.State> outputStates;
+        private final CommandData command;
 
-            public CounterpartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command) {
-                this.inputStateAndRef = inputStateAndRef;
-                this.outputStates = outputStates;
-                this.command = command;
-            }
+        public CounterPartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command) {
+            this.inputStateAndRef = inputStateAndRef;
+            this.outputStates = outputStates;
+            this.command = command;
+        }
 
-            public StateAndRef getInputStateAndRef() {
-                return inputStateAndRef;
-            }
+        public StateAndRef getInputStateAndRef() {
+            return inputStateAndRef;
+        }
 
-            public List<Cash.State> getOutputStates() {
-                return outputStates;
-            }
+        public List<Cash.State> getOutputStates() {
+            return outputStates;
+        }
 
-            public CommandData getCommand() {
-                return command;
-            }
+        public CommandData getCommand() {
+            return command;
         }
     }
 
@@ -207,6 +214,13 @@ public class IOUSettleFlow {
                     txWeJustSignedId = stx.getId();
                 }
             }
+
+            UntrustworthyData<StateAndRef> counterpartyData = otherPartyFlow.receive(StateAndRef.class);
+            StateAndRef inputStateAndRefToSettle = counterpartyData.unwrap( data -> {
+                return data;
+            });
+
+            otherPartyFlow.send(new CounterPartySpendHolder(null, null, null));
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
