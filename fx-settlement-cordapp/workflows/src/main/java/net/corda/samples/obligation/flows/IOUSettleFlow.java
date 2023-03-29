@@ -99,6 +99,8 @@ public class IOUSettleFlow {
             }
             tb.addCommand(counterPartyCashCommands.getCommand(), counterPartyCashCommands.getKeys());
 
+            subFlow(new ReceiveStateAndRefFlow(session));
+
             // Generate Cash Transfer Commands
             CounterPartySpendHolder mySpends =
                     generateCashCommands(getServiceHub(),
@@ -124,8 +126,6 @@ public class IOUSettleFlow {
             );
             tb.addCommand(command);
             tb.addInputState(inputStateAndRefToSettle);
-
-            //subFlow(new ReceiveStateAndRefFlow(session));
 
             // Step 8. Verify and sign the transaction.
             tb.verify(getServiceHub());
@@ -187,7 +187,7 @@ public class IOUSettleFlow {
 
     @CordaSerializable
     private static class CounterPartySpendHolder {
-        private final StateAndRef inputStateAndRef;
+        private final StateAndRef<Cash.State> inputStateAndRef;
         private final List<Cash.State> outputStates;
         private final CommandData command;
         private final List<PublicKey> keys;
@@ -210,7 +210,7 @@ public class IOUSettleFlow {
             this.error = error;
         }
 
-        public StateAndRef getInputStateAndRef() {
+        public StateAndRef<Cash.State> getInputStateAndRef() {
             return inputStateAndRef;
         }
 
@@ -269,7 +269,8 @@ public class IOUSettleFlow {
 
             otherPartyFlow.send(counterPartySpendHolder);
 
-            //subFlow(new SendStateAndRefFlow(otherPartyFlow, Arrays.asList(counterPartySpendHolder.getInputStateAndRef())));
+            //
+            subFlow(new SendStateAndRefFlow(otherPartyFlow, Arrays.asList(counterPartySpendHolder.getInputStateAndRef())));
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
