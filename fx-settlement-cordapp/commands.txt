@@ -38,6 +38,10 @@ Side
 
 
 
+http://[2406:da18:77c:6102:e1cb:2729:e46:326d]:8081/
+curl -v http://c6589c2edb1c.mylabserver.com:10012/api/iou/me
+
+
 sudo netstat -plnt | grep 10012
  ss -lntp | grep :10012
 
