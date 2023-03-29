@@ -125,6 +125,8 @@ public class IOUSettleFlow {
             tb.addCommand(command);
             tb.addInputState(inputStateAndRefToSettle);
 
+            //subFlow(new ReceiveStateAndRefFlow(session));
+
             // Step 8. Verify and sign the transaction.
             tb.verify(getServiceHub());
             SignedTransaction ptx = getServiceHub().signInitialTransaction(tb, Arrays.asList(getOurIdentity().getOwningKey()));
@@ -259,13 +261,15 @@ public class IOUSettleFlow {
             }
 
             UntrustworthyData<IOUState> counterpartyData = otherPartyFlow.receive(IOUState.class);
-            CounterPartySpendHolder inputStateAndRefToSettle = counterpartyData.unwrap(data -> {
+            CounterPartySpendHolder counterPartySpendHolder = counterpartyData.unwrap(data -> {
                 CounterPartySpendHolder cashCommands = generateCashCommands(getServiceHub(), data.getCounterAssetType(), data.getCounterAssetAmount(),
                         data.getCounterParty(), data.getTradingParty());
                 return cashCommands;
             });
 
-            otherPartyFlow.send(inputStateAndRefToSettle);
+            otherPartyFlow.send(counterPartySpendHolder);
+
+            //subFlow(new SendStateAndRefFlow(otherPartyFlow, Arrays.asList(counterPartySpendHolder.getInputStateAndRef())));
 
             // Create a sign transaction flows
             SignTxFlow signTxFlow = new SignTxFlow(otherPartyFlow, SignTransactionFlow.Companion.tracker());
