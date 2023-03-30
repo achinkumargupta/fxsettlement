@@ -15,14 +15,11 @@ angular.module('demoAppModule').controller('SettleModalCtrl', function($http, $u
             settleModal.formError = false;
 
             const id = settleModal.id;
-            const amount = settleModal.form.amount;
-            const currency = settleModal.form.currency;
-
             $uibModalInstance.close();
 
             const issueIOUEndpoint =
                 apiBaseURL +
-                `settle-iou?id=${id}&amount=${amount}&currency=${currency}`;
+                `settle-iou?id=${id}`;
 
             $http.get(issueIOUEndpoint).then(
                 (result) => settleModal.displayMessage(result),
@@ -47,7 +44,7 @@ angular.module('demoAppModule').controller('SettleModalCtrl', function($http, $u
     settleModal.cancel = () => $uibModalInstance.dismiss();
 
     function invalidFormInput() {
-        return isNaN(settleModal.form.amount) || (settleModal.form.currency.length != 3);
+        return false;
     }
 });
 

@@ -1,9 +1,11 @@
 "use strict";
 
-angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL, peers) {
+angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http, $uibModalInstance, $uibModal,
+                                            apiBaseURL, peers, supportedCurrencies) {
     const createIOUModal = this;
 
     createIOUModal.peers = peers;
+    createIOUModal.supportedCurrencies = supportedCurrencies;
     createIOUModal.form = {};
     createIOUModal.formError = false;
 
@@ -13,17 +15,19 @@ angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http,
             createIOUModal.formError = true;
         } else {
             createIOUModal.formError = false;
-
-            const amount = createIOUModal.form.amount;
-            const currency = createIOUModal.form.currency;
-            const party = createIOUModal.form.counterparty;
+            const valueDate = createIOUModal.form.valueDate;
+            const counterparty = createIOUModal.form.counterparty;
+            const tradedAmount = createIOUModal.form.tradedAmount;
+            const tradedCurrency = createIOUModal.form.tradedCurrency;
+            const counterAmount = createIOUModal.form.counterAmount;
+            const counterCurrency = createIOUModal.form.counterCurrency;
 
             $uibModalInstance.close();
 
             // We define the IOU creation endpoint.
             const issueIOUEndpoint =
                 apiBaseURL +
-                `issue-iou?amount=${amount}&currency=${currency}&party=${party}`;
+                `issue-iou?valueDate=${valueDate}&counterparty=${counterparty}&tradedAmount=${tradedAmount}&tradedCurrency=${tradedCurrency}&counterAmount=${counterAmount}&counterCurrency=${counterCurrency}`;
 
             // We hit the endpoint to create the IOU and handle success/failure responses.
             $http.put(issueIOUEndpoint).then(
@@ -53,7 +57,19 @@ angular.module('demoAppModule').controller('CreateIOUModalCtrl', function($http,
 
     // Validates the IOU.
     function invalidFormInput() {
-        return isNaN(createIOUModal.form.amount) || (createIOUModal.form.counterparty === undefined);
+       const valueDate = createIOUModal.form.valueDate;
+                const counterparty = createIOUModal.form.counterparty;
+                const tradedAmount = createIOUModal.form.tradedAmount;
+                const tradedCurrency = createIOUModal.form.tradedCurrency;
+                const counterAmount = createIOUModal.form.counterAmount;
+                const counterCurrency = createIOUModal.form.counterCurrency;
+
+        return isNaN(createIOUModal.form.tradedAmount) ||
+                    (createIOUModal.form.counterparty === undefined) ||
+                    isNaN(createIOUModal.form.counterAmount) ||
+                    (createIOUModal.form.tradedCurrency === createIOUModal.form.counterCurrency) ||
+                    (createIOUModal.form.counterCurrency.length != 3) ||
+                    (createIOUModal.form.tradedCurrency.length != 3);
     }
 });
 

@@ -15,7 +15,9 @@ import net.corda.samples.obligation.flows.IOUSettleFlow;
 import net.corda.samples.obligation.flows.IOUTransferFlow;
 import net.corda.samples.obligation.flows.SelfIssueCashFlow;
 import net.corda.samples.obligation.states.IOUState;
+import net.corda.samples.obligation.states.IOUState.TradeStatus;
 import net.corda.core.node.services.Vault;
+import java.text.SimpleDateFormat;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria;
 import java.time.LocalDateTime;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import javax.annotation.PostConstruct;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,7 +54,7 @@ public class MainController {
     public MainController(NodeRPCConnection rpc) {
         this.proxy = rpc.getProxy();
         this.me = proxy.nodeInfo().getLegalIdentities().get(0).getName();
-
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     }
 
     /** Helpers for filtering the network map cache. */
@@ -118,6 +121,14 @@ public class MainController {
                 .collect(Collectors.toList());
 
         myMap.put("peers", nodeNames);
+        return myMap;
+    }
+
+    @GetMapping(value = "/supported-currencies", produces = APPLICATION_JSON_VALUE)
+    public HashMap<String, List<String>> getSupportedCurrencies() {
+        HashMap<String, List<String>> myMap = new HashMap<>();
+        List<String> nodeNames = Arrays.asList("USD", "EUR", "GBP", "AUD");
+        myMap.put("supportedCurrencies", nodeNames);
         return myMap;
     }
 
@@ -198,15 +209,31 @@ public class MainController {
     }
 
     @PutMapping(value =  "/issue-iou" , produces = TEXT_PLAIN_VALUE )
-    public ResponseEntity<String> issueIOU(@RequestParam(value = "amount") int amount,
-                                           @RequestParam(value = "currency") String currency,
-                                           @RequestParam(value = "party") String party) throws IllegalArgumentException {
+    public ResponseEntity<String> issueIOU(@RequestParam(value = "valueDate") String valueDate,
+                                           @RequestParam(value = "counterparty") String counterparty,
+                                           @RequestParam(value = "tradedAmount") long tradedAmount,
+                                           @RequestParam(value = "tradedCurrency") String tradedCurrency,
+                                           @RequestParam(value = "counterAmount") long counterAmount,
+                                           @RequestParam(value = "counterCurrency") String counterCurrency) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
-        Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
+        Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(counterparty))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
+
         // Create a new IOU states using the parameters given.
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         try {
-            IOUState state = new IOUState(new Amount<>((long) amount * 100, Currency.getInstance(currency)), lender, me);
+            IOUState state = new IOUState(
+                    new Date(),
+                    df.parse(valueDate),
+                    new Amount<>((long) tradedAmount * 100, Currency.getInstance(tradedCurrency)),
+                    Currency.getInstance(tradedCurrency),
+                    me,
+                    new Amount<>((long) counterAmount * 100, Currency.getInstance(counterCurrency)),
+                    Currency.getInstance(counterCurrency),
+                    lender,
+                    TradeStatus.NEW);
             // Start the IOUIssueFlow. We block and waits for the flows to return.
             SignedTransaction result = proxy.startTrackedFlowDynamic(IOUIssueFlow.InitiatorFlow.class, state).getReturnValue().get();
             // Return the response.
@@ -222,14 +249,15 @@ public class MainController {
     }
 
     @PutMapping(value =  "/net-trades" , produces = TEXT_PLAIN_VALUE )
-    public ResponseEntity<String> netTrades(@RequestParam(value = "currency") String currency,
-                                           @RequestParam(value = "party") String party) throws IllegalArgumentException {
+    public ResponseEntity<String> netTrades(@RequestParam(value = "currencyA") String currencyA,
+                                            @RequestParam(value = "currencyB") String currencyB,
+                                            @RequestParam(value = "party") String party) throws IllegalArgumentException {
         // Get party objects for myself and the counterparty.
         Party me = proxy.nodeInfo().getLegalIdentities().get(0);
         Party lender = Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(party))).orElseThrow(() -> new IllegalArgumentException("Unknown party name."));
         try {
             // Start the IOUNetTradesFlow. We block and waits for the flows to return.
-            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currency), lender).getReturnValue().get();
+            SignedTransaction result = proxy.startTrackedFlowDynamic(IOUNetTradesFlow.InitiatorFlow.class, Currency.getInstance(currencyA), Currency.getInstance(currencyB), lender).getReturnValue().get();
             // Return the response.
             return ResponseEntity
                     .status(HttpStatus.CREATED)
@@ -261,15 +289,12 @@ public class MainController {
      * curl -X GET 'http://localhost:10007/api/iou/settle-iou?id=705dc5c5-44da-4006-a55b-e29f78955089&amount=98&currency=USD'
      */
     @GetMapping(value =  "settle-iou" , produces = TEXT_PLAIN_VALUE )
-    public  ResponseEntity<String> settleIOU(@RequestParam(value = "id") String id,
-                                             @RequestParam(value = "amount") int amount,
-                                             @RequestParam(value = "currency") String currency) {
+    public  ResponseEntity<String> settleIOU(@RequestParam(value = "id") String id) {
 
         UniqueIdentifier linearId = new UniqueIdentifier(null, UUID.fromString(id));
         try {
-            proxy.startTrackedFlowDynamic(IOUSettleFlow.InitiatorFlow.class, linearId,
-                    new Amount<>((long) amount * 100, Currency.getInstance(currency))).getReturnValue().get();
-            return ResponseEntity.status(HttpStatus.CREATED).body(""+ amount+ currency +" paid off on IOU id "+linearId.toString()+".");
+            proxy.startTrackedFlowDynamic(IOUSettleFlow.InitiatorFlow.class, linearId).getReturnValue().get();
+            return ResponseEntity.status(HttpStatus.CREATED).body("Trade " + linearId.toString()+" is successfully settled.");
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

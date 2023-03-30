@@ -1,11 +1,13 @@
 "use strict";
 
-angular.module('demoAppModule').controller('netTradesModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL, peers) {
+angular.module('demoAppModule').controller('netTradesModalCtrl', function($http, $uibModalInstance, $uibModal, apiBaseURL,
+peers, supportedCurrencies) {
     const netTradesModal = this;
 
     netTradesModal.peers = peers;
     netTradesModal.form = {};
     netTradesModal.formError = false;
+    netTradesModal.supportedCurrencies = supportedCurrencies;
 
     /** Validate and create an IOU. */
     netTradesModal.create = () => {
@@ -14,7 +16,8 @@ angular.module('demoAppModule').controller('netTradesModalCtrl', function($http,
         } else {
             netTradesModal.formError = false;
 
-            const currency = netTradesModal.form.currency;
+            const currencyA = netTradesModal.form.currencyA;
+            const currencyB = netTradesModal.form.currencyB;
             const party = netTradesModal.form.counterparty;
 
             $uibModalInstance.close();
@@ -22,7 +25,7 @@ angular.module('demoAppModule').controller('netTradesModalCtrl', function($http,
             // We define the IOU creation endpoint.
             const netTradesEndpoint =
                 apiBaseURL +
-                `net-trades?currency=${currency}&party=${party}`;
+                `net-trades?currencyA=${currencyA}&currencyB=${currencyB}&party=${party}`;
 
             // We hit the endpoint to create the IOU and handle success/failure responses.
             $http.put(netTradesEndpoint).then(
@@ -52,7 +55,11 @@ angular.module('demoAppModule').controller('netTradesModalCtrl', function($http,
 
     // Validates the IOU.
     function invalidFormInput() {
-        return (netTradesModal.form.counterparty === undefined);
+         // TODO more validations here
+        return (netTradesModal.form.counterparty === undefined) ||
+        (netTradesModal.form.currencyA === netTradesModal.form.currencyB) ||
+        (netTradesModal.form.currencyA.length != 3) ||
+        (netTradesModal.form.currencyB.length != 3);
     }
 });
 

@@ -8,9 +8,11 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
 
     // Retrieves the identity of this and other nodes.
     let peers = [];
+    let supportedCurrencies = [];
     $http.get(apiBaseURL + "me").then((response) => {demoApp.thisNode = response.data.me;console.log(response.data)});
     $http.get(apiBaseURL + "myorg").then((response) => {demoApp.thisNodeOrg = response.data.me;console.log(response.data)});
     $http.get(apiBaseURL + "peers").then((response) => peers = response.data.peers);
+    $http.get(apiBaseURL + "supported-currencies").then((response) => {supportedCurrencies = response.data.supportedCurrencies;console.log(response.data)});
 
     /** Displays the IOU creation modal. */
     demoApp.openCreateIOUModal = () => {
@@ -20,7 +22,8 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
             controllerAs: 'createIOUModal',
             resolve: {
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => peers,
+                supportedCurrencies: () => supportedCurrencies
             }
         });
 
@@ -35,7 +38,8 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
             controller: 'IssueCashModalCtrl',
             controllerAs: 'issueCashModal',
             resolve: {
-                apiBaseURL: () => apiBaseURL
+                apiBaseURL: () => apiBaseURL,
+                supportedCurrencies: () => supportedCurrencies
             }
         });
 
@@ -50,7 +54,8 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
             controllerAs: 'netTradesModal',
             resolve: {
                 apiBaseURL: () => apiBaseURL,
-                peers: () => peers
+                peers: () => peers,
+                supportedCurrencies: () => supportedCurrencies
             }
         });
 

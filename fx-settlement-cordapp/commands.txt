@@ -26,7 +26,7 @@ http://localhost:10012/api/iou/me
 Instrument, party, counterparty
 
 # Fields
-Time
+tradeDate
 valueDate = 2023-01-31
 TradingParty
 CounterPArty
@@ -35,3 +35,35 @@ tradedAmount
 CounterAssetType USD
 CounterAmount
 Side
+
+
+
+http://[2406:da18:77c:6102:e1cb:2729:e46:326d]:8081/
+curl -v http://c6589c2edb1c.mylabserver.com:10012/api/iou/me
+
+
+sudo netstat -plnt | grep 10012
+ ss -lntp | grep :10012
+
+sudo ufw allow 8080
+sudo ufw allow 8081
+sudo ufw allow 8082
+sudo ufw allow 8083
+sudo ufw allow 8084
+
+sudo ufw disable
+sudo ufw enable
+sudo ufw status verbose
+
+
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7005,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=CreditSuisse -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/CreditSuisse/corda.jar
+
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7006,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=Notary -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/Notary/corda.jar
+
+ /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7007,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=WellsFargo -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo/corda.jar
+
+
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=JPMorgan -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan/corda.jar
+
+
+

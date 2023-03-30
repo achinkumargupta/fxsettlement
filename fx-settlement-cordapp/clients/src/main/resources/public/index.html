@@ -57,30 +57,58 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <form>
         <div class="modal-body">
             <div class="form-group">
+                <label for="valueDate" class="control-label">Value Date:</label>
+                <input type="text" ng-model="createIOUModal.form.valueDate" placeholder="YYYY-MM-DD format" class="form-control" id="valueDate">
+            </div>
+            <div class="form-group">
                 <label for="createIOUCounterparty" class="control-label">Counterparty:</label>
                 <select ng-model="createIOUModal.form.counterparty" class="form-control" id="createIOUCounterparty"
                         ng-options="peer as peer for peer in createIOUModal.peers">
                 </select>
             </div>
-            <div class="form-group">
-                <label for="createIOUCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="createIOUModal.form.currency" class="form-control" id="createIOUCurrency">
+<!--            <div class="form-group">-->
+<!--                <label for="tradedAssetAmount" class="control-label">Traded Asset Amount:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.tradedAmount" class="form-control" id="tradedAssetAmount">-->
+<!--            </div>-->
+<!--           <div class="form-group">-->
+<!--                <label for="tradedAssetCurrency" class="control-label">Traded Asset Currency:</label>-->
+<!--               <input type="text" ng-model="createIOUModal.form.tradedCurrency" class="form-control" id="tradedAssetCurrency">-->
+<!--           </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="counterAssetAmount" class="control-label">Counter Asset Amount:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.counterAmount" class="form-control" id="counterAssetAmount">-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="counterAssetCurrency" class="control-label">Counter Asset Currency:</label>-->
+<!--                <input type="text" ng-model="createIOUModal.form.counterCurrency" class="form-control" id="counterAssetCurrency">-->
+<!--            </div>-->
+            <label class="control-label">Traded Asset:</label>
+            <div class="input-group">
+                <input type="text" ng-model="createIOUModal.form.tradedAmount" placeholder="Amount" class="form-control">
+                <span class="input-group-addon"></span>
+                <select ng-model="createIOUModal.form.tradedCurrency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in createIOUModal.supportedCurrencies">
+                </select>
             </div>
-            <div class="form-group">
-                <label for="createIOUAmount" class="control-label">Amount (Int):</label>
-                <input type="text" ng-model="createIOUModal.form.amount" class="form-control" id="createIOUAmount">
+            <label class="control-label">Counter Asset:</label>
+            <div class="input-group">
+                <input type="text" ng-model="createIOUModal.form.counterAmount" placeholder="Amount" class="form-control">
+                <span class="input-group-addon"></span>
+                <select ng-model="createIOUModal.form.counterCurrency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in createIOUModal.supportedCurrencies">
+                </select>
             </div>
             <div ng-show="createIOUModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
-                    Enter valid IOU creation parameters
+                    Enter valid Record Trade form parameters
                 </div>
             </div>
         </div>
         <div class="modal-footer">
             <button ng-click="createIOUModal.cancel()" type="button" class="btn btn-default">Close</button>
-            <button ng-click="createIOUModal.create()" type="button" class="btn btn-primary">Create IOU</button>
+            <button ng-click="createIOUModal.create()" type="button" class="btn btn-primary">Record Trade</button>
         </div>
     </form>
 </script>
@@ -103,9 +131,15 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
                         ng-options="peer as peer for peer in netTradesModal.peers">
                 </select>
             </div>
-            <div class="form-group">
-                <label for="netTradesForCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="netTradesModal.form.currency" class="form-control" id="netTradesForCurrency">
+            <label class="control-label">Currency Pair:</label>
+            <div class="input-group">
+                <select ng-model="netTradesModal.form.currencyA" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in netTradesModal.supportedCurrencies">
+                </select>
+                    <span class="input-group-addon"></span>
+                <select ng-model="netTradesModal.form.currencyB" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in netTradesModal.supportedCurrencies">
+                </select>
             </div>
             <div ng-show="netTradesModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
@@ -130,23 +164,26 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <script type="text/ng-template" id="issueCashModal.html">
     <div class="modal-header">
-        <h4 class="modal-title">Self-issue cash</h4>
+        <h4 class="modal-title">Issue cash</h4>
     </div>
     <form>
         <div class="modal-body">
             <div class="form-group">
                 <label for="issueCashCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="issueCashModal.form.currency" class="form-control" id="issueCashCurrency">
+                <select ng-model="issueCashModal.form.currency" class="form-control"
+                        ng-options="supportedCurrency as supportedCurrency for supportedCurrency in issueCashModal.supportedCurrencies"
+                        id="issueCashCurrency">
+                </select>
             </div>
             <div class="form-group">
-                <label for="issueCashAmount" class="control-label">Amount (Int):</label>
-                <input type="text" ng-model="issueCashModal.form.amount" class="form-control" id="issueCashAmount">
+                <label for="issueCashAmount" class="control-label">Amount:</label>
+                <input type="text" ng-model="issueCashModal.form.amount" placeholder="Amount" class="form-control" id="issueCashAmount">
             </div>
             <div ng-show="issueCashModal.formError" class="form-group">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
                     <span class="sr-only">Error:</span>
-                    Enter valid cash issuance parameters.
+                    Enter valid Issue cash form parameters.
                 </div>
             </div>
         </div>
@@ -198,29 +235,15 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
 
 <script type="text/ng-template" id="settleModal.html">
     <div class="modal-header">
-        <h4 class="modal-title">Settle IOU</h4>
+        <h4 class="modal-title">Settle Trade</h4>
     </div>
     <form>
         <div class="modal-body">
-            <div class="form-group">
-                <label for="settleCurrency" class="control-label">Currency:</label>
-                <input type="text" ng-model="settleModal.form.currency" class="form-control" id="settleCurrency">
-            </div>
-            <div class="form-group">
-                <label for="settleAmount" class="control-label">Amount (Int):</label>
-                <input type="text" ng-model="settleModal.form.amount" class="form-control" id="settleAmount">
-            </div>
-            <div ng-show="settleModal.formError" class="form-group">
-                <div class="alert alert-danger" role="alert">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    <span class="sr-only">Error:</span>
-                    Enter valid IOU settle parameters.
-                </div>
-            </div>
+            <p>Are you sure to proceed with this trade settlement?</p>
         </div>
         <div class="modal-footer">
-            <button ng-click="settleModal.cancel()" type="button" class="btn btn-default">Close</button>
-            <button ng-click="settleModal.settle()" type="button" class="btn btn-primary">Settle</button>
+            <button ng-click="settleModal.cancel()" type="button" class="btn btn-default">Cancel</button>
+            <button ng-click="settleModal.settle()" type="button" class="btn btn-primary">Ok</button>
         </div>
     </form>
 </script>
@@ -236,7 +259,7 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <div class="col-md-10">
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Account cash balances:</h3>
+                <h3 class="panel-title">Account Cash Balance</h3>
             </div>
             <div class="panel-body">
                 <table class="table">
@@ -262,37 +285,47 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <div class="col-md-10">
         <div ng-show="!demoApp.ious.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Recorded Trades:</h3>
+                <h3 class="panel-title">Recorded Trades</h3>
             </div>
             <div class="panel-body">There are no recorded trades currently. Use the "Record Trade" button to record a trade on Corda Ledger.</div>
         </div>
         <div ng-show="demoApp.ious.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Recorded Trades:</h3>
+                <h3 class="panel-title">Recorded Trades</h3>
             </div>
             <div class="panel-body">
                 <table class="table">
                     <thead>
                     <tr>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Amount</th>
-                        <th>Paid</th>
+                        <th>Trade Time</th>
+                        <th>Value Date</th>
+                        <th>Trading Party</th>
+                        <th>Traded Amount</th>
+<!--                        <th>Traded Currency</th>-->
+                        <th>Counter Party</th>
+                        <th>Counter Amount</th>
+<!--                        <th>Counter Currency</th>-->
+<!--                        <th>Trade Status</th>-->
                         <th>Id</th>
                         <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="iou in demoApp.ious">
-                        <td class="vert-align">{{iou.lender}}</td>
-                        <td class="vert-align">{{iou.borrower}}</td>
-                        <td class="vert-align">{{iou.amount}}</td>
-                        <td class="vert-align">{{iou.paid}}</td>
+                        <td class="vert-align">{{iou.tradeTime}}</td>
+                        <td class="vert-align">{{iou.valueDate.substring(0,10)}}</td>
+                        <td class="vert-align">{{iou.tradingParty}}</td>
+                        <td class="vert-align">{{iou.tradedAssetAmount}}</td>
+<!--                        <td class="vert-align">{{iou.tradedAssetType}}</td>-->
+                        <td class="vert-align">{{iou.counterParty}}</td>
+                        <td class="vert-align">{{iou.counterAssetAmount}}</td>
+<!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
+<!--                        <td class="vert-align">{{iou.tradeStatus}}</td>-->
                         <td class="vert-align">{{iou.linearId.id}}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <button ng-click="demoApp.openTransferModal(iou.linearId.id)" type="button" class="btn btn-primary">Transfer
-                                </button>
+<!--                                <button ng-click="demoApp.openTransferModal(iou.linearId.id)" type="button" class="btn btn-primary">Transfer-->
+<!--                                </button>-->
                                 <button ng-click="demoApp.openSettleModal(iou.linearId.id)" type="button" class="btn btn-primary">Settle
                                 </button>
                             </div>
@@ -311,31 +344,41 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
     <div class="col-md-10">
         <div ng-show="!demoApp.settled_trades.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Settled Trades:</h3>
+                <h3 class="panel-title">Settled Trades</h3>
             </div>
             <div class="panel-body">There are no settled trades currently.</div>
         </div>
         <div ng-show="demoApp.settled_trades.length" class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">Settled Trades:</h3>
+                <h3 class="panel-title">Settled Trades</h3>
             </div>
             <div class="panel-body">
                 <table class="table">
                     <thead>
                     <tr>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Amount</th>
-                        <th>Paid</th>
+                        <th>Trade Time</th>
+                        <th>Value Date</th>
+                        <th>Trading Party</th>
+                        <th>Traded Amount</th>
+                        <!--                        <th>Traded Currency</th>-->
+                        <th>Counter Party</th>
+                        <th>Counter Amount</th>
+                        <!--                        <th>Counter Currency</th>-->
+<!--                        <th>Trade Status</th>-->
                         <th>Id</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="iou in demoApp.settled_trades">
-                        <td class="vert-align">{{iou.lender}}</td>
-                        <td class="vert-align">{{iou.borrower}}</td>
-                        <td class="vert-align">{{iou.amount}}</td>
-                        <td class="vert-align">{{iou.amount}}</td>
+                        <td class="vert-align">{{iou.tradeTime}}</td>
+                        <td class="vert-align">{{iou.valueDate.substring(0,10)}}</td>
+                        <td class="vert-align">{{iou.tradingParty}}</td>
+                        <td class="vert-align">{{iou.tradedAssetAmount}}</td>
+                        <!--                        <td class="vert-align">{{iou.tradedAssetType}}</td>-->
+                        <td class="vert-align">{{iou.counterParty}}</td>
+                        <td class="vert-align">{{iou.counterAssetAmount}}</td>
+                        <!--                        <td class="vert-align">{{iou.counterAssetType}}</td>-->
+<!--                        <td class="vert-align">{{iou.tradeStatus}}</td>-->
                         <td class="vert-align">{{iou.linearId.id}}</td>
                     </tr>
                     </tbody>
