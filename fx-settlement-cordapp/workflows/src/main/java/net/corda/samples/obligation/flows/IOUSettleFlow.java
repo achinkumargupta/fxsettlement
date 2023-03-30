@@ -18,14 +18,11 @@ import net.corda.finance.flows.AbstractCashFlow;
 import net.corda.finance.flows.CashIssueFlow;
 import net.corda.samples.obligation.contracts.IOUContract;
 import net.corda.samples.obligation.states.IOUState;
-import net.corda.samples.obligation.states.IOUState.TradeStatus;
 import net.corda.core.utilities.UntrustworthyData;
 
 import java.text.SimpleDateFormat;
 import java.lang.IllegalArgumentException;
 import java.util.*;
-
-import static net.corda.finance.workflows.GetBalances.getCashBalance;
 
 import java.util.Currency;
 import java.util.List;
@@ -146,14 +143,16 @@ public class IOUSettleFlow {
 
             UntrustworthyData<IOUState> counterpartyData = otherPartyFlow.receive(IOUState.class);
             CashSpendHolder counterPartySpendHolder = counterpartyData.unwrap(data -> {
-                CashSpendHolder cashCommands = CashSpendUtils.generateCashCommands(getServiceHub(), data.getCounterAssetType(), data.getCounterAssetAmount(),
-                        data.getCounterParty(), data.getTradingParty());
+                CashSpendHolder cashCommands = CashSpendUtils.generateCashCommands(getServiceHub(),
+                                                                                   data.getCounterAssetType(),
+                                                                                   data.getCounterAssetAmount(),
+                                                                                   data.getCounterParty(),
+                                                                                   data.getTradingParty());
                 return cashCommands;
             });
 
             otherPartyFlow.send(counterPartySpendHolder);
 
-            //
             subFlow(new SendStateAndRefFlow(otherPartyFlow, Arrays.asList(counterPartySpendHolder.getInputStateAndRef())));
 
             // Create a sign transaction flows
