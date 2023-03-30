@@ -19,6 +19,7 @@ import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.node.services.vault.QueryCriteria.VaultQueryCriteria;
+import net.corda.core.utilities.UntrustworthyData;
 import net.corda.finance.workflows.asset.CashUtils;
 
 import java.util.*;
@@ -70,9 +71,6 @@ public class IOUNetTradesFlow {
             List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
 
             List<Long> spends = getNetSpends(allResults, validInputStatesToSettle, listOfRequiredSigners);
-            long netSpendForCurrencyA = spends.get(0);
-            long netSpendForCurrencyB = spends.get(1);
-
             // Step 2. Check the party running this flows is the borrower.
             if (validInputStatesToSettle.isEmpty()) {
                 throw new IllegalArgumentException("There are no trades with value date as today to settle for party " + netAgainstParty);
@@ -80,11 +78,18 @@ public class IOUNetTradesFlow {
 
             // Step 3. Create a new TransactionBuilder object.
             final TransactionBuilder builder = new TransactionBuilder(notary);
+            FlowSession session = initiateFlow(netAgainstParty);
 
-            if (netSpendForCurrencyA > 0) {
+            // Get net spends and create spend commands
+            Amount netSpendForCurrencyAAmount = new Amount<>(spends.get(0), currencyA);
+            Amount netSpendForCurrencyBAmount = new Amount<>(spends.get(1), currencyB);
+
+            // Notify the other party of the spends
+//            session.send(new HashMap<Currency, Amount>() {{put(currencyA, netSpendForCurrencyAAmount);
+//            put(currencyB, netSpendForCurrencyBAmount);}});
+
+            if (netSpendForCurrencyAAmount.getQuantity() > 0) {
                 // Generate Cash Transfer Commands
-                Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
-
                 CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
                         currencyA,
                         netSpendForCurrencyAAmount,
@@ -92,14 +97,20 @@ public class IOUNetTradesFlow {
                         netAgainstParty);
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             } else {
-                // Request for commands from the counterparty
-
+//                // Request for commands from the counterparty
+//                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
+//                        session.sendAndReceive(CashSpendHolder.class, inputStateToSettle);
+//
+//                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+//                    System.out.println("Received Initiator CounterParty Data:" + data);
+//                    return data;
+//                });
+//                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
+//                subFlow(new ReceiveStateAndRefFlow(session));
             }
 
-            if (netSpendForCurrencyB > 0) {
+            if (netSpendForCurrencyBAmount.getQuantity() > 0) {
                 // Generate Cash Transfer Commands
-                Amount netSpendForCurrencyBAmount = new Amount<>(netSpendForCurrencyA, currencyB);
-
                 CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
                         currencyB,
                         netSpendForCurrencyBAmount,
@@ -108,7 +119,15 @@ public class IOUNetTradesFlow {
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             } else {
                 // Request for commands from the counterparty
-
+//                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
+//                        session.sendAndReceive(CashSpendHolder.class, inputStateToSettle);
+//
+//                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+//                    System.out.println("Received Initiator CounterParty Data:" + data);
+//                    return data;
+//                });
+//                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
+//                subFlow(new ReceiveStateAndRefFlow(session));
             }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
@@ -127,7 +146,6 @@ public class IOUNetTradesFlow {
                     Arrays.asList(getOurIdentity().getOwningKey()));
 
             // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
-            FlowSession session = initiateFlow(netAgainstParty);
             new IdentitySyncFlow.Send(session, ptx.getTx());
 
             SignedTransaction fullySignedTransaction = subFlow(new CollectSignaturesFlow(ptx, Arrays.asList(session)));
