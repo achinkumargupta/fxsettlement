@@ -83,37 +83,27 @@ public class IOUNetTradesFlow {
 
             List<PublicKey> keyList = new ArrayList<PublicKey>();
             if (netSpendForCurrencyA > 0) {
+                // Generate Cash Transfer Commands
                 Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
-                // Step 4. Check we have enough cash to settle the requested amount.
-                final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), currencyA);
-                if (cashBalance.getQuantity() < netSpendForCurrencyAAmount.getQuantity()) {
-                    throw new IllegalArgumentException("We don't have enough cash to settle " + netSpendForCurrencyAAmount
-                          + " in our account.");
-                }
 
-                // Step 5. Get some cash from the vault and add a spend to our transaction builder.
-                // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
-                // generateSpend returns all public keys which have to be used to sign transaction
-                List<PublicKey> keyList1 = (List<PublicKey>) CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyAAmount,
-                        getOurIdentityAndCert(), netAgainstParty).getSecond();
-                keyList.addAll(keyList1);
+                CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
+                        currencyA,
+                        netSpendForCurrencyAAmount,
+                        getOurIdentity(),
+                        netAgainstParty);
+                CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             }
 
             if (netSpendForCurrencyB > 0) {
-                Amount netSpendForCurrencyBAmount = new Amount<>((long) netSpendForCurrencyB, currencyB);
-                // Step 4. Check we have enough cash to settle the requested amount.
-                final Amount<Currency> cashBalance = getCashBalance(getServiceHub(), currencyB);
-                if (cashBalance.getQuantity() < netSpendForCurrencyBAmount.getQuantity()) {
-                    throw new IllegalArgumentException("We don't have enough cash to settle " + netSpendForCurrencyBAmount
-                            + " in our account.");
-                }
+                // Generate Cash Transfer Commands
+                Amount netSpendForCurrencyBAmount = new Amount<>(netSpendForCurrencyA, currencyB);
 
-                // Step 5. Get some cash from the vault and add a spend to our transaction builder.
-                // Vault might contain states "owned" by anonymous parties. This is one of techniques to anonymize transactions
-                // generateSpend returns all public keys which have to be used to sign transaction
-                List<PublicKey> keyList1 = (List<PublicKey>) CashUtils.generateSpend(getServiceHub(), builder, netSpendForCurrencyBAmount,
-                        getOurIdentityAndCert(), netAgainstParty).getSecond();
-                keyList.addAll(keyList1);
+                CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
+                        currencyB,
+                        netSpendForCurrencyBAmount,
+                        getOurIdentity(),
+                        netAgainstParty);
+                CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
@@ -125,6 +115,7 @@ public class IOUNetTradesFlow {
                 builder.addCommand(command);
                 builder.addInputState(validInputStateToSettle);
             }
+
             // Step 8. Verify and sign the transaction.
             builder.verify(getServiceHub());
             keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
