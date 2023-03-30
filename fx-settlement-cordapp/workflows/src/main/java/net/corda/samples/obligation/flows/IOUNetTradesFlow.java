@@ -81,7 +81,6 @@ public class IOUNetTradesFlow {
             // Step 3. Create a new TransactionBuilder object.
             final TransactionBuilder builder = new TransactionBuilder(notary);
 
-            List<PublicKey> keyList = new ArrayList<PublicKey>();
             if (netSpendForCurrencyA > 0) {
                 // Generate Cash Transfer Commands
                 Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
@@ -92,6 +91,9 @@ public class IOUNetTradesFlow {
                         getOurIdentity(),
                         netAgainstParty);
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
+            } else {
+                // Request for commands from the counterparty
+
             }
 
             if (netSpendForCurrencyB > 0) {
@@ -104,6 +106,9 @@ public class IOUNetTradesFlow {
                         getOurIdentity(),
                         netAgainstParty);
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
+            } else {
+                // Request for commands from the counterparty
+
             }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
@@ -118,8 +123,8 @@ public class IOUNetTradesFlow {
 
             // Step 8. Verify and sign the transaction.
             builder.verify(getServiceHub());
-            keyList.addAll(Arrays.asList(getOurIdentity().getOwningKey()));
-            SignedTransaction ptx = getServiceHub().signInitialTransaction(builder, keyList);
+            SignedTransaction ptx = getServiceHub().signInitialTransaction(builder,
+                    Arrays.asList(getOurIdentity().getOwningKey()));
 
             // 11. Collect all of the required signatures from other Corda nodes using the CollectSignaturesFlow
             FlowSession session = initiateFlow(netAgainstParty);
