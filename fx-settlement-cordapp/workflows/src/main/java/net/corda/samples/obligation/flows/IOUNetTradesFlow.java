@@ -61,80 +61,23 @@ public class IOUNetTradesFlow {
         public SignedTransaction call() throws FlowException {
             System.out.println("IOUNetTradesFlow - Currency Pair " + currencyA + " :: " + currencyB + " Party " + netAgainstParty);
 
+            // Step 1. Get a reference to the notary service on our network and our key pair.
+            /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
+            final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
+
             Vault.Page allResults = getServiceHub().getVaultService().queryBy(IOUState.class);
             List<StateAndRef> validInputStatesToSettle = new ArrayList<StateAndRef>();
             List<PublicKey> listOfRequiredSigners = new ArrayList<PublicKey>();
 
-            long netSpendForCurrencyA = 0;
-            long netSpendForCurrencyB = 0;
-
-            for (Object stateToSettle : allResults.getStates()) {
-                IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
-
-                if (!df.format(inputStateToSettle.getValueDate()).equals(df.format(new Date()))) {
-                    continue;
-                }
-                if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
-                        !inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
-                    continue;
-                }
-                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode()) &&
-                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
-                    continue;
-                }
-                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode()) &&
-                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
-                    continue;
-                }
-
-                // This means tradingAmount has to be reduced from our account
-                if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
-                    // Pick the matching input states
-                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
-                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getTradedAssetAmount().getQuantity();
-                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getCounterAssetAmount().getQuantity();
-                    }
-                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
-                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getCounterAssetAmount().getQuantity();
-                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getTradedAssetAmount().getQuantity();
-                    }
-
-                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
-                            .stream().map(AbstractParty::getOwningKey)
-                            .collect(Collectors.toList()));
-
-                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
-                }
-
-                if (inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
-                    // Pick the matching input states
-                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
-                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getTradedAssetAmount().getQuantity();
-                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getCounterAssetAmount().getQuantity();
-                    }
-                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
-                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getCounterAssetAmount().getQuantity();
-                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getTradedAssetAmount().getQuantity();
-                    }
-
-                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
-                            .stream().map(AbstractParty::getOwningKey)
-                            .collect(Collectors.toList()));
-
-                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
-                }
-            }
-
-            // Step 1. Get a reference to the notary service on our network and our key pair.
-            /** Explicit selection of notary by CordaX500Name - argument can by coded in flows or parsed from config (Preferred)*/
-            final Party notary = getServiceHub().getNetworkMapCache().getNotary(CordaX500Name.parse("O=Notary,L=London,C=GB"));
+            List<Long> spends = getNetSpends(allResults, validInputStatesToSettle, listOfRequiredSigners);
+            long netSpendForCurrencyA = spends.get(0);
+            long netSpendForCurrencyB = spends.get(1);
 
             // Step 2. Check the party running this flows is the borrower.
             if (validInputStatesToSettle.isEmpty()) {
                 throw new IllegalArgumentException("There are no trades with value date as today to settle for party " + netAgainstParty);
             }
 
-            System.out.println("List of signers: " + listOfRequiredSigners.stream().distinct().collect(Collectors.toList()));
             // Step 3. Create a new TransactionBuilder object.
             final TransactionBuilder builder = new TransactionBuilder(notary);
 
@@ -197,6 +140,72 @@ public class IOUNetTradesFlow {
              *     and the causes it to be persisted to the vault of appropriate nodes.
              */
             return subFlow(new FinalityFlow(fullySignedTransaction, session));
+        }
+
+        private List<Long> getNetSpends(Vault.Page allResults,
+                                        List<StateAndRef> validInputStatesToSettle,
+                                        List<PublicKey> listOfRequiredSigners) {
+            long netSpendForCurrencyA = 0;
+            long netSpendForCurrencyB = 0;
+
+            for (Object stateToSettle : allResults.getStates()) {
+                IOUState inputStateToSettle = (IOUState) ((StateAndRef) stateToSettle).getState().getData();
+
+                if (!df.format(inputStateToSettle.getValueDate()).equals(df.format(new Date()))) {
+                    continue;
+                }
+                if (!inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey()) &&
+                        !inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    continue;
+                }
+                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode()) &&
+                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                    continue;
+                }
+                if (!inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode()) &&
+                        !inputStateToSettle.getCounterAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                    continue;
+                }
+
+                // This means tradingAmount has to be reduced from our account
+                if (inputStateToSettle.getCounterParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    // Pick the matching input states
+                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getTradedAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getCounterAssetAmount().getQuantity();
+                    }
+                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getCounterAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getTradedAssetAmount().getQuantity();
+                    }
+
+                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                            .stream().map(AbstractParty::getOwningKey)
+                            .collect(Collectors.toList()));
+
+                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
+                }
+
+                if (inputStateToSettle.getTradingParty().getOwningKey().equals(netAgainstParty.getOwningKey())) {
+                    // Pick the matching input states
+                    if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyA.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA - inputStateToSettle.getTradedAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB + inputStateToSettle.getCounterAssetAmount().getQuantity();
+                    }
+                    else if (inputStateToSettle.getTradedAssetType().getCurrencyCode().equals(currencyB.getCurrencyCode())) {
+                        netSpendForCurrencyA = netSpendForCurrencyA + inputStateToSettle.getCounterAssetAmount().getQuantity();
+                        netSpendForCurrencyB = netSpendForCurrencyB - inputStateToSettle.getTradedAssetAmount().getQuantity();
+                    }
+
+                    listOfRequiredSigners.addAll(inputStateToSettle.getParticipants()
+                            .stream().map(AbstractParty::getOwningKey)
+                            .collect(Collectors.toList()));
+
+                    validInputStatesToSettle.add((StateAndRef) stateToSettle);
+                }
+            }
+
+            return Arrays.asList(netSpendForCurrencyA, netSpendForCurrencyB);
         }
     }
 
