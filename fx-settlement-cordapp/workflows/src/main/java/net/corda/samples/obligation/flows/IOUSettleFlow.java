@@ -9,8 +9,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.node.services.Vault;
 import net.corda.core.node.services.vault.QueryCriteria;
-import net.corda.core.serialization.ConstructorForDeserialization;
-import net.corda.core.serialization.CordaSerializable;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
@@ -23,7 +21,6 @@ import net.corda.samples.obligation.states.IOUState;
 import net.corda.samples.obligation.states.IOUState.TradeStatus;
 import net.corda.core.utilities.UntrustworthyData;
 
-import java.security.PublicKey;
 import java.text.SimpleDateFormat;
 import java.lang.IllegalArgumentException;
 import java.util.*;
@@ -66,12 +63,6 @@ public class IOUSettleFlow {
             IOUState inputStateToSettle = (IOUState) ((StateAndRef) results.getStates().get(0)).getState().getData();
             Date valueDate = inputStateToSettle.valueDate;
             Party counterParty = inputStateToSettle.counterParty;
-            Party tradingParty = inputStateToSettle.tradingParty;
-            Amount<Currency> tradedAssetAmount = inputStateToSettle.tradedAssetAmount;
-            Amount<Currency> counterAssetAmount = inputStateToSettle.counterAssetAmount;
-            Currency tradedAssetType = inputStateToSettle.tradedAssetType;
-            Currency counterAssetType = inputStateToSettle.counterAssetType;
-            TradeStatus tradeStatus = inputStateToSettle.tradeStatus;
 
             if (!df.format(valueDate).equals(df.format(new Date()))) {
                 throw new IllegalArgumentException("Can only settle trades with Value date as today.");
@@ -82,10 +73,10 @@ public class IOUSettleFlow {
             FlowSession session = initiateFlow(counterParty);
 
             // Retrieve counter party's Cash Transfer Commands
-            UntrustworthyData<CounterPartySpendHolder> counterPartySpendHolder =
-                    session.sendAndReceive(CounterPartySpendHolder.class, inputStateToSettle);
+            UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
+                    session.sendAndReceive(CashSpendHolder.class, inputStateToSettle);
 
-            CounterPartySpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+            CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
                 System.out.println("Received Initiator CounterParty Data:" + data);
                 return data;
             });
@@ -102,8 +93,8 @@ public class IOUSettleFlow {
             subFlow(new ReceiveStateAndRefFlow(session));
 
             // Generate Cash Transfer Commands
-            CounterPartySpendHolder mySpends =
-                    generateCashCommands(getServiceHub(),
+            CashSpendHolder mySpends =
+                    CashSpendUtils.generateCashCommands(getServiceHub(),
                                          inputStateToSettle.getTradedAssetType(),
                                          inputStateToSettle.getTradedAssetAmount(),
                                          inputStateToSettle.getTradingParty(),
@@ -143,94 +134,6 @@ public class IOUSettleFlow {
         }
     }
 
-    private static CounterPartySpendHolder generateCashCommands (
-            ServiceHub hub,
-            Currency assetType,
-            Amount<Currency> assetAmount,
-            Party tradingParty,
-            Party counterParty) {
-        Vault.Page results = hub.getVaultService().queryBy(Cash.State.class);
-        List<StateAndRef> inputStateAndRefToSettle = results.getStates();
-        StateAndRef inputRef = null;
-        for (StateAndRef srf : inputStateAndRefToSettle) {
-            if (((Cash.State) srf.getState().getData()).getAmount().getToken()
-                    .getProduct().equals(assetType)) {
-                inputRef = srf;
-            }
-        }
-        if (inputRef == null) {
-            return new CounterPartySpendHolder("Unable to find the any Cash for " + assetType +
-                    " with party " + tradingParty.getName().getOrganisation());
-        }
-
-        Cash.State tokenCash = (Cash.State) inputRef.getState().getData();
-        if (tokenCash.getAmount().getQuantity() < assetAmount.getQuantity()) {
-            return new CounterPartySpendHolder("Not enough cash in " + assetType +
-                    " with party " + tradingParty.getName().getOrganisation() + " to settle with the trade.");
-        }
-
-        Issued<Currency> issuedCurrency = new Issued<Currency>(tokenCash.getAmount().getToken().getIssuer(),
-                assetType);
-        Amount<Issued<Currency>> tradedAssetIssuedAmount = new Amount<Issued<Currency>>(assetAmount.getQuantity(),
-                issuedCurrency);
-
-        Cash.State tokenCashAfterTransfer = tokenCash.copy(tokenCash.getAmount().minus(tradedAssetIssuedAmount),
-                tradingParty);
-        Cash.State tokenCashAfterTransferForCounterParty = tokenCash.copy(tradedAssetIssuedAmount,
-                counterParty);
-
-        return new CounterPartySpendHolder(inputRef,
-                Arrays.asList(tokenCashAfterTransfer, tokenCashAfterTransferForCounterParty),
-                new Cash.Commands.Move(),
-                Arrays.asList(tradingParty.getOwningKey(), counterParty.getOwningKey()));
-    }
-
-    @CordaSerializable
-    private static class CounterPartySpendHolder {
-        private final StateAndRef<Cash.State> inputStateAndRef;
-        private final List<Cash.State> outputStates;
-        private final CommandData command;
-        private final List<PublicKey> keys;
-        private final String error;
-
-        public CounterPartySpendHolder(String error) {
-            this(null, null, null, null, error);
-        }
-
-        public CounterPartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command, List<PublicKey> keys) {
-            this(inputStateAndRef, outputStates, command, keys, null);
-        }
-
-        @ConstructorForDeserialization
-        public CounterPartySpendHolder(StateAndRef inputStateAndRef, List<Cash.State> outputStates, CommandData command, List<PublicKey> keys, String error) {
-            this.inputStateAndRef = inputStateAndRef;
-            this.outputStates = outputStates;
-            this.command = command;
-            this.keys = keys;
-            this.error = error;
-        }
-
-        public StateAndRef<Cash.State> getInputStateAndRef() {
-            return inputStateAndRef;
-        }
-
-        public List<Cash.State> getOutputStates() {
-            return outputStates;
-        }
-
-        public CommandData getCommand() {
-            return command;
-        }
-
-        public List<PublicKey> getKeys() {
-            return keys;
-        }
-
-        public String getError() {
-            return error;
-        }
-    }
-
     /**
      * This is the flows which signs IOU settlements.
      * The signing is handled by the [SignTransactionFlow].
@@ -261,8 +164,8 @@ public class IOUSettleFlow {
             }
 
             UntrustworthyData<IOUState> counterpartyData = otherPartyFlow.receive(IOUState.class);
-            CounterPartySpendHolder counterPartySpendHolder = counterpartyData.unwrap(data -> {
-                CounterPartySpendHolder cashCommands = generateCashCommands(getServiceHub(), data.getCounterAssetType(), data.getCounterAssetAmount(),
+            CashSpendHolder counterPartySpendHolder = counterpartyData.unwrap(data -> {
+                CashSpendHolder cashCommands = CashSpendUtils.generateCashCommands(getServiceHub(), data.getCounterAssetType(), data.getCounterAssetAmount(),
                         data.getCounterParty(), data.getTradingParty());
                 return cashCommands;
             });
