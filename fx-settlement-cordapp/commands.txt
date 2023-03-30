@@ -5,9 +5,9 @@
 # child projects
 ./gradlew :clients:build
 
-./gradlew runPartyAServer  -- web client = 10009 -- debug port 5005
-./gradlew runPartyBServer  -- web client = 10012
-./gradlew runPartyCServer  -- web client = 10015
+./gradlew runPartyAServer  -- web client = 800* -- debug port 5005
+./gradlew runPartyBServer  -- web client = 800*
+./gradlew runPartyCServer  -- web client = 800*
 
 # Docker
 cd /Users/achin/Downloads/DLT/fxsettlement/fx-settlement-cordapp/build/nodes
