@@ -80,35 +80,16 @@ public class IOUSettleFlow {
                 System.out.println("Received Initiator CounterParty Data:" + data);
                 return data;
             });
-            if (counterPartyCashCommands.getError() != null) {
-                throw new RuntimeException(counterPartyCashCommands.getError());
-            }
-
-            tb.addInputState(counterPartyCashCommands.getInputStateAndRef());
-            for (Cash.State outputState: counterPartyCashCommands.getOutputStates()) {
-                tb.addOutputState(outputState);
-            }
-            tb.addCommand(counterPartyCashCommands.getCommand(), counterPartyCashCommands.getKeys());
-
+            CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, tb);
             subFlow(new ReceiveStateAndRefFlow(session));
 
             // Generate Cash Transfer Commands
-            CashSpendHolder mySpends =
-                    CashSpendUtils.generateCashCommands(getServiceHub(),
-                                         inputStateToSettle.getTradedAssetType(),
-                                         inputStateToSettle.getTradedAssetAmount(),
-                                         inputStateToSettle.getTradingParty(),
-                                         inputStateToSettle.getCounterParty());
-
-            if (mySpends.getError() != null) {
-                throw new RuntimeException(mySpends.getError());
-            }
-
-            tb.addInputState(mySpends.getInputStateAndRef());
-            for (Cash.State outputState: mySpends.getOutputStates()) {
-                tb.addOutputState(outputState);
-            }
-            tb.addCommand(mySpends.getCommand(), mySpends.getKeys());
+            CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
+                                                                           inputStateToSettle.getTradedAssetType(),
+                                                                           inputStateToSettle.getTradedAssetAmount(),
+                                                                           inputStateToSettle.getTradingParty(),
+                                                                           inputStateToSettle.getCounterParty());
+            CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, tb);
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
             Command<IOUContract.Commands.Settle> command = new Command<>(

@@ -6,6 +6,7 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.node.services.Vault;
+import net.corda.core.transactions.TransactionBuilder;
 import net.corda.finance.contracts.asset.Cash;
 
 import java.util.Arrays;
@@ -13,6 +14,19 @@ import java.util.Currency;
 import java.util.List;
 
 public class CashSpendUtils {
+    public static TransactionBuilder addCashCommandsToTransactionBuilder(CashSpendHolder cashSpendHolder, TransactionBuilder tb) {
+        if (cashSpendHolder.getError() != null) {
+            throw new RuntimeException(cashSpendHolder.getError());
+        }
+
+        tb.addInputState(cashSpendHolder.getInputStateAndRef());
+        for (Cash.State outputState: cashSpendHolder.getOutputStates()) {
+            tb.addOutputState(outputState);
+        }
+        tb.addCommand(cashSpendHolder.getCommand(), cashSpendHolder.getKeys());
+        return tb;
+    }
+
     public static CashSpendHolder generateCashCommands (
             ServiceHub hub,
             Currency assetType,
