@@ -81,14 +81,16 @@ public class IOUNetTradesFlow {
             FlowSession session = initiateFlow(netAgainstParty);
 
             // Get net spends and create spend commands
-            Amount netSpendForCurrencyAAmount = new Amount<>(spends.get(0), currencyA);
-            Amount netSpendForCurrencyBAmount = new Amount<>(spends.get(1), currencyB);
+            long netSpendForCurrencyA = spends.get(0);
+            long netSpendForCurrencyB = spends.get(1);
 
             // Notify the other party of the spends
 //            session.send(new HashMap<Currency, Amount>() {{put(currencyA, netSpendForCurrencyAAmount);
 //            put(currencyB, netSpendForCurrencyBAmount);}});
 
-            if (netSpendForCurrencyAAmount.getQuantity() > 0) {
+            if (netSpendForCurrencyA > 0) {
+                Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
+                
                 // Generate Cash Transfer Commands
                 CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
                         currencyA,
@@ -109,7 +111,8 @@ public class IOUNetTradesFlow {
 //                subFlow(new ReceiveStateAndRefFlow(session));
             }
 
-            if (netSpendForCurrencyBAmount.getQuantity() > 0) {
+            if (netSpendForCurrencyB > 0) {
+                Amount netSpendForCurrencyBAmount = new Amount<>(netSpendForCurrencyB, currencyB);
                 // Generate Cash Transfer Commands
                 CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
                         currencyB,
