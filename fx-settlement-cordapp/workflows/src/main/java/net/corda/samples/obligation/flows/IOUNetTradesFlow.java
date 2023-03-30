@@ -12,6 +12,8 @@ import net.corda.core.flows.*;
 import net.corda.core.contracts.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
+import net.corda.core.serialization.ConstructorForDeserialization;
+import net.corda.core.serialization.CordaSerializable;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
@@ -85,8 +87,9 @@ public class IOUNetTradesFlow {
             long netSpendForCurrencyB = spends.get(1);
 
             // Notify the other party of the spends
-//            session.send(new HashMap<Currency, Long>() {{put(currencyA, netSpendForCurrencyA);
-//            put(currencyB, netSpendForCurrencyB);}});
+            session.send(new NetSpendHolder(currencyA, netSpendForCurrencyA,
+                                            currencyB, netSpendForCurrencyB,
+                                            getOurIdentity(), netAgainstParty));
 
             if (netSpendForCurrencyA > 0) {
                 Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
@@ -99,16 +102,16 @@ public class IOUNetTradesFlow {
                         netAgainstParty);
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             } else {
-//                // Request for commands from the counterparty
-//                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
-//                        session.sendAndReceive(CashSpendHolder.class, inputStateToSettle);
-//
-//                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
-//                    System.out.println("Received Initiator CounterParty Data:" + data);
-//                    return data;
-//                });
-//                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
-//                subFlow(new ReceiveStateAndRefFlow(session));
+                // Request for commands from the counterparty
+                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
+                        session.receive(CashSpendHolder.class);
+
+                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+                    System.out.println("Received Initiator CounterParty Data:" + data);
+                    return data;
+                });
+                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
+                subFlow(new ReceiveStateAndRefFlow(session));
             }
 
             if (netSpendForCurrencyB > 0) {
@@ -122,15 +125,15 @@ public class IOUNetTradesFlow {
                 CashSpendUtils.addCashCommandsToTransactionBuilder(mySpends, builder);
             } else {
                 // Request for commands from the counterparty
-//                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
-//                        session.sendAndReceive(CashSpendHolder.class, inputStateToSettle);
-//
-//                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
-//                    System.out.println("Received Initiator CounterParty Data:" + data);
-//                    return data;
-//                });
-//                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
-//                subFlow(new ReceiveStateAndRefFlow(session));
+                UntrustworthyData<CashSpendHolder> counterPartySpendHolder =
+                        session.receive(CashSpendHolder.class);
+
+                CashSpendHolder counterPartyCashCommands = counterPartySpendHolder.unwrap(data -> {
+                    System.out.println("Received Initiator CounterParty Data:" + data);
+                    return data;
+                });
+                CashSpendUtils.addCashCommandsToTransactionBuilder(counterPartyCashCommands, builder);
+                subFlow(new ReceiveStateAndRefFlow(session));
             }
 
             // Step 6. Add the IOU input states and settle command to the transaction builder.
@@ -226,6 +229,50 @@ public class IOUNetTradesFlow {
         }
     }
 
+    @CordaSerializable
+    public static class NetSpendHolder {
+        private final Currency currencyA;
+        private final Long amountA;
+        private final Currency currencyB;
+        private final Long amountB;
+        private final Party myself;
+        private final Party netAgainstParty;
+
+        @ConstructorForDeserialization
+        public NetSpendHolder(Currency currencyA, Long amountA, Currency currencyB, Long amountB, Party myself, Party netAgainstParty) {
+            this.currencyA = currencyA;
+            this.amountA = amountA;
+            this.currencyB = currencyB;
+            this.amountB = amountB;
+            this.myself = myself;
+            this.netAgainstParty = netAgainstParty;
+        }
+
+        public Currency getCurrencyA() {
+            return currencyA;
+        }
+
+        public Long getAmountA() {
+            return amountA;
+        }
+
+        public Currency getCurrencyB() {
+            return currencyB;
+        }
+
+        public Long getAmountB() {
+            return amountB;
+        }
+
+        public Party getMyself() {
+            return myself;
+        }
+
+        public Party getNetAgainstParty() {
+            return netAgainstParty;
+        }
+    }
+
     /**
      * This is the flows which signs IOU issuances.
      * The signing is handled by the [SignTransactionFlow].
@@ -255,6 +302,37 @@ public class IOUNetTradesFlow {
                     // Once the transaction has verified, initialize txWeJustSignedID variable.
                     txWeJustSigned = stx.getId();
                 }
+            }
+
+            UntrustworthyData<NetSpendHolder> spendHolderUntrustworthyData = flowSession.receive(NetSpendHolder.class);
+            NetSpendHolder spendHolder = spendHolderUntrustworthyData.unwrap(data -> {return data;});
+            System.out.println("Details " +
+                    spendHolder.getCurrencyA() + " :: " + spendHolder.getAmountA() + " :: " +
+                    spendHolder.getCurrencyB() + " :: " + spendHolder.getAmountB() + " :: " +
+                    spendHolder.getMyself() + " :: " + spendHolder.getNetAgainstParty());
+            if (spendHolder.getAmountA() < 0) {
+                // We have to spend the money
+                CashSpendHolder currencyACashCommands = CashSpendUtils.generateCashCommands(getServiceHub(),
+                            spendHolder.getCurrencyA(),
+                            new Amount<>(-spendHolder.getAmountA(), spendHolder.getCurrencyA()),
+                            spendHolder.getNetAgainstParty(),
+                            spendHolder.getMyself());
+                flowSession.send(currencyACashCommands);
+
+                subFlow(new SendStateAndRefFlow(flowSession,
+                        Arrays.asList(currencyACashCommands.getInputStateAndRef())));
+            }
+            if (spendHolder.getAmountB() < 0) {
+                // We have to spend the money
+                CashSpendHolder currencyBCashCommands = CashSpendUtils.generateCashCommands(getServiceHub(),
+                        spendHolder.getCurrencyB(),
+                        new Amount<>(-spendHolder.getAmountB(), spendHolder.getCurrencyB()),
+                        spendHolder.getNetAgainstParty(),
+                        spendHolder.getMyself());
+                flowSession.send(currencyBCashCommands);
+
+                subFlow(new SendStateAndRefFlow(flowSession,
+                        Arrays.asList(currencyBCashCommands.getInputStateAndRef())));
             }
 
             // Create a sign transaction flows
