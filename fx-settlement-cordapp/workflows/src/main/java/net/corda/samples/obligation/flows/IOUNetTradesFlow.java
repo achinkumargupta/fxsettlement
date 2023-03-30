@@ -85,12 +85,12 @@ public class IOUNetTradesFlow {
             long netSpendForCurrencyB = spends.get(1);
 
             // Notify the other party of the spends
-//            session.send(new HashMap<Currency, Amount>() {{put(currencyA, netSpendForCurrencyAAmount);
-//            put(currencyB, netSpendForCurrencyBAmount);}});
+//            session.send(new HashMap<Currency, Long>() {{put(currencyA, netSpendForCurrencyA);
+//            put(currencyB, netSpendForCurrencyB);}});
 
             if (netSpendForCurrencyA > 0) {
                 Amount netSpendForCurrencyAAmount = new Amount<>(netSpendForCurrencyA, currencyA);
-                
+
                 // Generate Cash Transfer Commands
                 CashSpendHolder mySpends = CashSpendUtils.generateCashCommands(getServiceHub(),
                         currencyA,
