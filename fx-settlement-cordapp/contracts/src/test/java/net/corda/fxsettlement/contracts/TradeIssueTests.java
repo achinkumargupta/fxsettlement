@@ -17,7 +17,7 @@ import org.junit.*;
  * task description to determine how to get the tests to pass.
  */
 @Ignore
-public class IOUIssueTests {
+public class TradeIssueTests {
     // A pre-defined dummy command.
     public interface Commands extends CommandData {
         class DummyCommand extends TypeOnlyCommandData implements Commands{}

@@ -17,7 +17,7 @@ import static net.corda.testing.node.NodeTestUtils.ledger;
  * of the tests and the task description to determine how to get the tests to pass.
  */
 @Ignore
-public class IOUSettleTests {
+public class TradeSettleTests {
 
     public interface Commands extends CommandData {
         class DummyCommand extends TypeOnlyCommandData implements Commands{}
