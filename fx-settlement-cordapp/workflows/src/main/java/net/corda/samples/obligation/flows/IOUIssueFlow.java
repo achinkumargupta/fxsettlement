@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import net.corda.core.contracts.Amount;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.crypto.SecureHash;
@@ -34,18 +35,61 @@ public class IOUIssueFlow {
     @InitiatingFlow
     @StartableByRPC
     public static class InitiatorFlow extends FlowLogic<SignedTransaction> {
-        private final IOUState state;
-
+        private final IOUState inputState;
         private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        private final String valueDate;
+        private final long tradedAmount;
+        private final String tradedCurrency;
+        private final long counterAmount;
+        private final String counterCurrency;
+        private final String myParty;
+        private final String counterparty;
 
-        public InitiatorFlow(IOUState state) {
-            this.state = state;
+        public InitiatorFlow(String valueDate, long tradedAmount, String tradedCurrency,
+                             long counterAmount, String counterCurrency, String myParty, String counterparty) {
             df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            this.valueDate = valueDate;
+            this.tradedAmount = tradedAmount;
+            this.tradedCurrency = tradedCurrency;
+            this.counterCurrency = counterCurrency;
+            this.counterAmount = counterAmount;
+            this.myParty = myParty;
+            this.counterparty = counterparty;
+            this.inputState = null;
+        }
+
+        public InitiatorFlow(IOUState inputState) {
+            this.inputState = inputState;
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            this.valueDate = null;
+            this.tradedAmount = 0;
+            this.tradedCurrency = null;
+            this.counterCurrency = null;
+            this.counterAmount = 0;
+            this.myParty = null;
+            this.counterparty = null;
         }
 
         @Suspendable
         @Override
         public SignedTransaction call() throws FlowException {
+            IOUState state = inputState;
+            try {
+                if (state == null) {
+                    state = new IOUState(new Date(),
+                        df.parse(valueDate),
+                        new Amount(tradedAmount, Currency.getInstance(tradedCurrency)),
+                        Currency.getInstance(tradedCurrency),
+                        getServiceHub().getIdentityService().wellKnownPartyFromX500Name(CordaX500Name.parse(myParty)),
+                        new Amount(counterAmount, Currency.getInstance(counterCurrency)),
+                        Currency.getInstance(counterCurrency),
+                        getServiceHub().getIdentityService().wellKnownPartyFromX500Name(CordaX500Name.parse(counterparty)),
+                        IOUState.TradeStatus.NEW);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Can't parse the input parameters.");
+            }
+
             // Create a new IOU states using the parameters given.
             try {
                 if (state.getValueDate().compareTo(df.parse(df.format(new Date()))) < 0) {

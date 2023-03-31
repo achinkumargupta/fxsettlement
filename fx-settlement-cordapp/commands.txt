@@ -14,7 +14,9 @@ cd /Users/achin/Downloads/DLT/fxsettlement/fx-settlement-cordapp/build/nodes
 ./gradlew clean build prepareDockerNodes -x test
 
 run vaultTrack contractStateType: net.corda.samples.obligation.states.IOUState
-flow start ExampleFlow$Initiator iouValue: 50, otherParty: "O=Credit Suisse,L=London,C=GB"
+
+
+flow start IOUIssueFlow$InitiatorFlow valueDate: "2023-03-31", tradedAmount: 10000, tradedCurrency: USD, counterAmount: 90000, counterCurrency: EUR, myParty: "O=Credit Suisse,L=London,C=GB", counterparty: "O=Wells Fargo,L=Newyork,C=US"
 
 
 
