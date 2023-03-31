@@ -13,15 +13,14 @@
 cd /Users/achin/Downloads/DLT/fxsettlement/fx-settlement-cordapp/build/nodes
 ./gradlew clean build prepareDockerNodes -x test
 
-run vaultTrack contractStateType: net.corda.samples.obligation.states.IOUState
 
-
-flow start IOUIssueFlow$InitiatorFlow valueDate: "2023-03-31", tradedAmount: 10000, tradedCurrency: USD, counterAmount: 90000, counterCurrency: EUR, myParty: "O=Credit Suisse,L=London,C=GB", counterparty: "O=Wells Fargo,L=Newyork,C=US"
-flow start IOUSettleFlow$InitiatorFlow stateLinearId: 46a75102-a43d-4e28-bce3-4b82a543d37d
+run vaultTrack contractStateType: net.corda.fxsettlement.states.RecordedTradeState
+flow start TradeIssueFlow$InitiatorFlow valueDate: "2023-03-31", tradedAmount: 10000, tradedCurrency: USD, counterAmount: 90000, counterCurrency: EUR, myParty: "O=Credit Suisse,L=London,C=GB", counterparty: "O=Wells Fargo,L=Newyork,C=US"
+flow start TradeSettleFlow$InitiatorFlow stateLinearId: 46a75102-a43d-4e28-bce3-4b82a543d37d
 
 
 # Web queries
-http://localhost:10012/api/iou/me
+http://localhost:8081/api/iou/me
 
 
 # Unique field
@@ -63,7 +62,6 @@ sudo ufw status verbose
 /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7006,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=Notary -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/Notary/corda.jar
 
  /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7007,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=WellsFargo -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo/corda.jar
-
 
 /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=JPMorgan -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan/corda.jar
 
