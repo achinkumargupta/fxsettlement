@@ -177,7 +177,7 @@ public class IOUSettleFlow {
 
         Amount<Currency> amount;
 
-        SelfIssueCashFlow(Amount<Currency> amount) {
+        public SelfIssueCashFlow(Amount<Currency> amount) {
             this.amount = amount;
         }
 

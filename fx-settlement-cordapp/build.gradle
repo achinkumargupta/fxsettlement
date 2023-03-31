@@ -72,6 +72,9 @@ sourceSets {
 }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+
 
     // Corda dependencies.
     cordaCompile "$corda_core_release_group:corda-core:$corda_core_release_version"
@@ -91,6 +94,8 @@ dependencies {
     cordaCompile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     cordaCompile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaCompile "org.slf4j:jul-to-slf4j:$slf4j_version"
+    testCompile 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testCompile 'org.mockito:mockito-core:4.11.0'
     //cordaDriver "net.corda:corda-shell:4.10"
 
 }
