@@ -9,11 +9,7 @@ import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.finance.contracts.asset.Cash;
-import net.corda.fxsettlement.flows.TradeIssueFlow;
-import net.corda.fxsettlement.flows.NetTradesFlow;
-import net.corda.fxsettlement.flows.TradeSettleFlow;
-import net.corda.fxsettlement.flows.TradeTransferFlow;
-import net.corda.fxsettlement.flows.SelfIssueCashFlow;
+import net.corda.fxsettlement.flows.*;
 import net.corda.fxsettlement.states.RecordedTradeState;
 import net.corda.fxsettlement.states.RecordedTradeState.TradeStatus;
 import net.corda.core.node.services.Vault;
@@ -206,6 +202,25 @@ public class MainController {
     @GetMapping(value = "/cash-balances",produces = APPLICATION_JSON_VALUE)
     public Map<Currency,Amount<Currency>> cashBalances(){
         return getCashBalances(proxy);
+    }
+
+    @GetMapping(value = "/net-cash-balances",produces = APPLICATION_JSON_VALUE)
+    public List<NetCashView.CashViewRecords> netCashBalances() {
+        Party me = proxy.nodeInfo().getLegalIdentities().get(0);
+        List<Party> peersList = new ArrayList<>();
+        List<Currency> currencies = new ArrayList<>();
+        for (String counterparty : getPeers().get("peers")) {
+            peersList.add(Optional.ofNullable(proxy.wellKnownPartyFromX500Name(CordaX500Name.parse(counterparty))).orElseThrow(() -> new IllegalArgumentException("Unknown party name.")));
+        }
+        for (String cur : getSupportedCurrencies().get("supportedCurrencies")) {
+            currencies.add(Currency.getInstance(cur));
+        }
+        NetCashView netCashView = new NetCashView(me,
+                proxy.vaultQuery(RecordedTradeState.class).getStates(),
+                peersList,
+                currencies);
+
+        return netCashView.getNetCashView();
     }
 
     @PutMapping(value =  "/issue-iou" , produces = TEXT_PLAIN_VALUE )
