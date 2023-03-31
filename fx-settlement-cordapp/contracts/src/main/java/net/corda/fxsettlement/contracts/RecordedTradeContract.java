@@ -5,6 +5,7 @@ import net.corda.core.contracts.*;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 import net.corda.core.identity.AbstractParty;
+import net.corda.core.identity.Party;
 import net.corda.core.transactions.LedgerTransaction;
 import net.corda.finance.contracts.asset.Cash;
 import net.corda.fxsettlement.states.RecordedTradeState;
@@ -133,13 +134,13 @@ public class RecordedTradeContract implements Contract {
                     RecordedTradeState inputIOU = tx.inputsOfType(RecordedTradeState.class).get(0);
                     //TODO fix these too.
 //                    Amount<Currency> inputAmount = inputIOU.amount;
-//
-//                    // check that the output cash is being assigned to the lender
-//                    Party lenderIdentity = inputIOU.lender;
-//                    List<Cash.State> acceptableCash = allOutputCash.stream().filter(cash -> cash.getOwner().getOwningKey().equals(lenderIdentity.getOwningKey())).collect(Collectors.toList());
-//                    System.out.println("\n====== acceptableCash " + acceptableCash);
-//                    require.using("There must be output cash paid to the recipient.", acceptableCash.size() > 0);
-//
+
+                    // check that the output cash is being assigned to the lender
+                    Party counterpartyIdentity = inputIOU.getCounterParty();
+                    List<Cash.State> acceptableCash = allOutputCash.stream().filter(cash -> cash.getOwner().getOwningKey().equals(counterpartyIdentity.getOwningKey())).collect(Collectors.toList());
+                    System.out.println("\n====== acceptableCash " + acceptableCash);
+                    require.using("There must be output cash paid to the counterparty.", acceptableCash.size() > 0);
+
 //                    // Sum the acceptable cash sent to the lender
 //                    Amount<Currency> acceptableCashSum = new Amount<>(0, inputAmount.getToken());
 //                    for (Cash.State cash : acceptableCash) {
