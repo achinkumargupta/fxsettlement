@@ -3,10 +3,16 @@ package net.corda.fxsettlement.states;
 
 import net.corda.core.contracts.*;
 import net.corda.core.identity.Party;
+
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
+import net.corda.finance.Currencies;
 import net.corda.fxsettlement.TestUtils;
+import org.junit.Assert;
 import org.junit.Test;
+
+import javax.servlet.http.Part;
 import java.util.*;
 import static org.junit.Assert.*;
 
@@ -97,39 +103,67 @@ public class RecordedTradeStateTests {
         assertTrue(counterAssetAmountIdx < tradedAssetTypeIdx);
         assertTrue(tradedAssetTypeIdx < counterAssetTypeIdx);
     }
-//
-//    @Test
-//    public void checkPayHelperMethod() {
-//        IOUState iou = new IOUState(new Date(), new Date(), new Amount(10000, Currency.getInstance("USD")),
-//                Currency.getInstance("USD"), TestUtils.ALICE.getParty(),
-//                new Amount(100, Currency.getInstance("EUR")),
-//                Currency.getInstance("EUR"), TestUtils.BOB.getParty(), IOUState.TradeStatus.NEW);
-//
-//        assertEquals(Currencies.DOLLARS(95), iou.pay(Currencies.DOLLARS(500)).getTradedAssetAmount());
-//        assertEquals(Currencies.DOLLARS(97), iou.pay(Currencies.DOLLARS(100)).pay(Currencies.DOLLARS(200)).getTradedAssetAmount());
-//        assertEquals(Currencies.DOLLARS(90), iou.pay(Currencies.DOLLARS(500)).pay(Currencies.DOLLARS(300)).pay(Currencies.DOLLARS(200)).getTradedAssetAmount());
-//    }
 
-//    @Test
-//    public void checkWithNewLenderHelperMethod() {
-//        IOUState iou = new IOUState(Currencies.DOLLARS(10), TestUtils.ALICE.getParty(), TestUtils.BOB.getParty());
-//        Assert.assertEquals(TestUtils.MINICORP.getParty(), iou.withNewLender(TestUtils.MINICORP.getParty()).getLender());
-//        Assert.assertEquals(TestUtils.MEGACORP.getParty(), iou.withNewLender(TestUtils.MEGACORP.getParty()).getLender());
-//    }
-//
-//    @Test
-//    public void correctConstructorsExist() {
-//        // Public constructor for new states
-//        try {
-//            Constructor<IOUState> contructor = IOUState.class.getConstructor(Amount.class, Party.class, Party.class);
-//        } catch( NoSuchMethodException nsme ) {
-//            fail("The correct public constructor does not exist!");
-//        }
-//        // Private constructor for updating states
-//        try {
-//            Constructor<IOUState> contructor = IOUState.class.getDeclaredConstructor(Amount.class, Party.class, Party.class, Amount.class, UniqueIdentifier.class);
-//        } catch( NoSuchMethodException nsme ) {
-//            fail("The correct private copy constructor does not exist!");
-//        }
-//    }
+    @Test
+    public void checkPayHelperMethod() {
+        RecordedTradeState iou = new RecordedTradeState(new Date(),
+                new Date(),
+                new Amount(10000, Currency.getInstance("USD")),
+                Currency.getInstance("USD"),
+                TestUtils.ALICE.getParty(),
+                new Amount(100, Currency.getInstance("EUR")),
+                Currency.getInstance("EUR"),
+                TestUtils.BOB.getParty(),
+                RecordedTradeState.TradeStatus.NEW);
+
+        assertEquals(new Amount(9500, Currency.getInstance("USD")),
+                iou.pay(new Amount(500, Currency.getInstance("USD"))).getTradedAssetAmount());
+    }
+
+    @Test
+    public void correctConstructorsExist() {
+        try {
+            Constructor<RecordedTradeState> contructor =
+                    RecordedTradeState.class.getConstructor(Date.class, Date.class, Amount.class,
+                            Currency.class, Party.class, Amount.class, Currency.class, Party.class,
+                            RecordedTradeState.TradeStatus.class);
+        } catch( NoSuchMethodException nsme ) {
+            fail("The correct public constructor does not exist!");
+        }
+    }
+
+    @Test
+    public void copyFunctionWorks() {
+        RecordedTradeState iou = new RecordedTradeState(new Date(),
+                new Date(),
+                new Amount(10000, Currency.getInstance("USD")),
+                Currency.getInstance("USD"),
+                TestUtils.ALICE.getParty(),
+                new Amount(100, Currency.getInstance("EUR")),
+                Currency.getInstance("EUR"),
+                TestUtils.BOB.getParty(),
+                RecordedTradeState.TradeStatus.NEW);
+
+        RecordedTradeState iouCopy = iou.copy(new Date(),
+                new Date(),
+                new Amount(5000, Currency.getInstance("USD")),
+                Currency.getInstance("USD"),
+                TestUtils.BOB.getParty(),
+                new Amount(5000, Currency.getInstance("EUR")),
+                Currency.getInstance("EUR"),
+                TestUtils.ALICE.getParty(),
+                RecordedTradeState.TradeStatus.CANCELLED);
+
+
+        assertEquals(iou.getLinearId(), iouCopy.getLinearId());
+        assertNotEquals(iou.getTradeTime(), iouCopy.getTradeTime());
+        assertNotEquals(iou.getValueDate(), iouCopy.getValueDate());
+        assertNotEquals(iou.getTradedAssetAmount(), iouCopy.getTradedAssetAmount());
+        assertNotEquals(iou.getCounterAssetAmount(), iouCopy.getCounterAssetAmount());
+        assertEquals(iou.getTradedAssetType(), iouCopy.getTradedAssetType());
+        assertEquals(iou.getCounterAssetType(), iouCopy.getCounterAssetType());
+        assertNotEquals(iou.getTradingParty(), iouCopy.getTradingParty());
+        assertNotEquals(iou.getCounterParty(), iouCopy.getCounterParty());
+        assertNotEquals(iou.getTradeStatus(), iouCopy.getTradeStatus());
+    }
 }

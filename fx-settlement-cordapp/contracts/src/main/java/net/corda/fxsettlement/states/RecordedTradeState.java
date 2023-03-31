@@ -137,12 +137,7 @@ public class RecordedTradeState implements ContractState, LinearState {
      */
     public RecordedTradeState pay(Amount<Currency> amountToPay) {
         Amount<Currency> newAmountPaid = this.tradedAssetAmount.minus(amountToPay);
-        return new RecordedTradeState(tradeTime, valueDate, newAmountPaid, tradedAssetType, counterParty, counterAssetAmount,
-                counterAssetType, counterParty, tradeStatus, this.getLinearId());
-    }
-
-    public RecordedTradeState withNewLender(Party newLender) {
-        return new RecordedTradeState(tradeTime, valueDate, tradedAssetAmount, tradedAssetType, newLender, counterAssetAmount,
+        return new RecordedTradeState(tradeTime, valueDate, newAmountPaid, tradedAssetType, tradingParty, counterAssetAmount,
                 counterAssetType, counterParty, tradeStatus, this.getLinearId());
     }
 
@@ -156,7 +151,8 @@ public class RecordedTradeState implements ContractState, LinearState {
             Currency counterAssetType,
             Party counterParty,
             TradeStatus tradeStatus) {
-        return new RecordedTradeState(tradeTime, valueDate, tradedAssetAmount, tradedAssetType, tradingParty, counterAssetAmount,
+        return new RecordedTradeState(tradeTime, valueDate, tradedAssetAmount,
+                tradedAssetType, tradingParty, counterAssetAmount,
                 counterAssetType, counterParty, tradeStatus, this.getLinearId());
     }
 

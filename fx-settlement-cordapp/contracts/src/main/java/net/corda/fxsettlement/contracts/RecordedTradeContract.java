@@ -176,7 +176,7 @@ public class RecordedTradeContract implements Contract {
                     Set<PublicKey> listOfParticipantPublicKeys = inputIOU.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toSet());
                     List<PublicKey> arrayOfSigners = command.getSigners();
                     Set<PublicKey> setOfSigners = new HashSet<PublicKey>(arrayOfSigners);
-                    require.using("Both lender and borrower must sign IOU settle transaction.", setOfSigners.equals(listOfParticipantPublicKeys));
+                    require.using("Both lender and borrower must sign Trade settle transaction.", setOfSigners.equals(listOfParticipantPublicKeys));
 
                     return null;
                 })
