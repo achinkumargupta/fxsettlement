@@ -133,7 +133,7 @@ public class RecordedTradeStateTests {
     }
 
     @Test
-    public void copyFunctionWorks() {
+    public void copyFunctionWorks() throws InterruptedException {
         RecordedTradeState iou = new RecordedTradeState(new Date(),
                 new Date(),
                 new Amount(10000, Currency.getInstance("USD")),
@@ -143,6 +143,9 @@ public class RecordedTradeStateTests {
                 Currency.getInstance("EUR"),
                 TestUtils.BOB.getParty(),
                 RecordedTradeState.TradeStatus.NEW);
+
+        // Just to let the time move
+        Thread.sleep(1000);
 
         RecordedTradeState iouCopy = iou.copy(new Date(),
                 new Date(),

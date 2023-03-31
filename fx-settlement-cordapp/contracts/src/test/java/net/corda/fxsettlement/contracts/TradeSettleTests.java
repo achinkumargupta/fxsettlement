@@ -1,44 +1,37 @@
 package net.corda.fxsettlement.contracts;
 
 
+import net.corda.core.contracts.Amount;
 import net.corda.core.contracts.CommandData;
+import net.corda.core.contracts.PartyAndReference;
 import net.corda.core.contracts.TypeOnlyCommandData;
+import net.corda.core.identity.AbstractParty;
+import net.corda.core.utilities.OpaqueBytes;
+import net.corda.finance.contracts.asset.Cash;
+import net.corda.testing.node.MockServices;
 import org.junit.Ignore;
+
+import java.util.Arrays;
+import java.util.Currency;
 
 import static net.corda.testing.node.NodeTestUtils.ledger;
 
-
-/**
- * Practical exercise instructions for Contracts Part 3.
- * The objective here is to write some contracts code that verifies a transaction to settle an [IOUState].
- * Settling is more complicated than transferring and issuing as it requires you to use multiple states types in a
- * transaction.
- * As with the [IOUIssueTests] and [IOUTransferTests] uncomment each unit test and run them one at a time. Use the body
- * of the tests and the task description to determine how to get the tests to pass.
- */
-@Ignore
 public class TradeSettleTests {
 
     public interface Commands extends CommandData {
         class DummyCommand extends TypeOnlyCommandData implements Commands{}
     }
 
-//    static private final MockServices ledgerServices = new MockServices(
-//            Arrays.asList("net.corda.samples.fxsettlement.contracts", "net.corda.finance.contracts.asset")
-//    );
-//
-//    private Cash.State createCashState(AbstractParty owner, Amount<Currency> amount) {
-//        OpaqueBytes defaultBytes = new OpaqueBytes(new byte[1]);
-//        PartyAndReference partyAndReference = new PartyAndReference(owner, defaultBytes);
-//        return new Cash.State(partyAndReference, amount, owner);
-//    }
-//
-//    /**
-//     * Task 1.
-//     * We need to add another case to deal with settling in the [IOUContract.verify] function.
-//     * TODO: Add the [IOUContract.Commands.Settle] case to the verify function.
-//     * Hint: You can leave the body empty for now.
-//     */
+    static private final MockServices ledgerServices = new MockServices(
+            Arrays.asList("net.corda.fxsettlement.states", "net.corda.fxsettlement.contracts")
+    );
+
+    private Cash.State createCashState(AbstractParty owner, Amount<Currency> amount) {
+        OpaqueBytes defaultBytes = new OpaqueBytes(new byte[1]);
+        PartyAndReference partyAndReference = new PartyAndReference(owner, defaultBytes);
+        return new Cash.State(partyAndReference, amount, owner);
+    }
+
 //    @Test
 //    public void mustIncludeSettleCommand() {
 //        IOUState iou = new IOUState(Currencies.POUNDS(10), TestUtils.ALICE.getParty(), TestUtils.BOB.getParty());
@@ -75,19 +68,7 @@ public class TradeSettleTests {
 //        });
 //    }
 //
-//    /**
-//     * Task 2.
-//     * For now, we only want to settle one IOU at once. We can use the [TransactionForContract.groupStates] function
-//     * to group the IOUs by their [linearId] property. We want to make sure there is only one group of input and output
-//     * IOUs.
-//     * TODO: Using [groupStates] add a constraint that checks for one group of input/output IOUs.
-//     * Hint:
-//     * - The [groupStates] method on a Transaction takes two type parameters: the type of the states you wish to group by and the type
-//     *   of the grouping key used (indicated by a method reference), in this case as you need to use the [linearId] and it is a [UniqueIdentifier].
-//     *
-//     *       tx.groupStates(State.class, State::getLinearId)
-//     *
-//     */
+
 //    @Test
 //    public void mustBeOneGroupOfIOUs() {
 //        IOUState iouONE = new IOUState(Currencies.POUNDS(10), TestUtils.ALICE.getParty(), TestUtils.BOB.getParty());
@@ -120,12 +101,6 @@ public class TradeSettleTests {
 //            return null;
 //        });
 //    }
-//
-//    /**
-//     * Task 3.
-//     * There always has to be one input IOU in a settle transaction but there might not be an output IOU.
-//     * TODO: Add a constraint to check there is always one input IOU.
-//     */
 //
 //    @Test
 //    public void mustHaveOneInputIOU() {
@@ -166,15 +141,7 @@ public class TradeSettleTests {
 //
 //    }
 //
-//    /**
-//     * Task 4.
-//     * Now we need to ensure that there are cash states present in the outputs list. The [IOUContract] doesn't care
-//     * about input cash as the validity of the cash transaction will be checked by the [Cash] contracts. We do however
-//     * need to count how much cash is being used to settle and update our [IOUState] accordingly.
-//     * TODO: Filter out the cash states from the list of outputs list and assign them to a constant.
-//     * Hint:
-//     * - Use the [outputsOfType] extension function to filter the transaction's outputs by type, in this case [Cash.State].
-//     */
+
 //    @Test
 //    public void mustBeCashOutputStatesPresent() {
 //
@@ -205,17 +172,7 @@ public class TradeSettleTests {
 //
 //    }
 //
-//    /**
-//     * Task 5.
-//     * Not only to we need to check that [Cash] output states are present but we need to check that the payer is
-//     * correctly assigning the lender as the new owner of these states.
-//     * TODO: Add a constraint to check that the lender is the new owner of at least some output cash.
-//     * Hint:
-//     * - Not all of the cash may be assigned to the lender as some of the input cash may be sent back to the borrower as change.
-//     * - We need to use the [Cash.State.getOwner()] method to check to see that it is the value of our public key.
-//     * - Use [filter] to filter over the list of cash states to get the ones which are being assigned to us.
-//     * - Once we have this filtered list, we can sum the cash being paid to us so we know how much is being settled.
-//     */
+
 //    @Test
 //    public void mustBeCashOutputStatesWithRecipientAsOwner() {
 //        IOUState iou = new IOUState(Currencies.POUNDS(10), TestUtils.ALICE.getParty(), TestUtils.BOB.getParty());

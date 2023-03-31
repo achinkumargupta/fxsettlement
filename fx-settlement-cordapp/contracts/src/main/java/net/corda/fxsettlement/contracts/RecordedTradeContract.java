@@ -13,16 +13,11 @@ import java.security.PublicKey;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * This is the contracts code which defines how the [IOUState] behaves. Looks at the unit tests in
- * [IOUContractTests] for more insight on how this contracts verifies a transaction.
- */
-
 // LegalProseReference: this is just a dummy string for the time being.
 
 @LegalProseReference(uri = "<prose_contract_uri>")
 public class RecordedTradeContract implements Contract {
-    public static final String IOU_CONTRACT_ID = "net.corda.fxsettlement.contracts.RecordedTradeContract";
+    public static final String TRADE_CONTRACT_ID = "net.corda.fxsettlement.contracts.RecordedTradeContract";
 
     /**
      * The IOUContract can handle three transaction types involving [IOUState]s.
@@ -51,7 +46,6 @@ public class RecordedTradeContract implements Contract {
              * for issuing, settling and transferring.
              */
             if (commandData.equals(new Commands.Issue())) {
-
                 requireThat(require -> {
 
                     require.using("No inputs should be consumed when recording a trade.", tx.getInputStates().size() == 0);
@@ -62,7 +56,7 @@ public class RecordedTradeContract implements Contract {
                             outputState.tradedAssetAmount.getQuantity() > 0);
                     require.using("A newly issued trade must have a positive counter asset amount.",
                             outputState.counterAssetAmount.getQuantity() > 0);
-                    require.using("The lender and borrower cannot have the same identity.", outputState.tradingParty.getOwningKey() != outputState.counterParty.getOwningKey());
+                    require.using("Both parties cannot have the same identity.", outputState.tradingParty.getOwningKey() != outputState.counterParty.getOwningKey());
 
                     // TODO put more checks here.
                     List<PublicKey> signers = tx.getCommands().get(0).getSigners();
@@ -77,16 +71,16 @@ public class RecordedTradeContract implements Contract {
                         participantKeys.add(party.getOwningKey());
                     }
 
-                    require.using("Both lender and borrower together only may sign IOU issue transaction.", signersSet.containsAll(participantKeys) && signersSet.size() == 2);
+                    require.using("Both parties together only may sign IOU issue transaction.", signersSet.containsAll(participantKeys) && signersSet.size() == 2);
 
                     return null;
                 });
 
             }
-//            else if (commandData.equals(new Commands.Transfer())) {
-//
-//                requireThat(require -> {
-//
+            else if (commandData.equals(new Commands.Transfer())) {
+
+                requireThat(require -> {
+
 //                    require.using("An IOU transfer transaction should only consume one input states.", tx.getInputStates().size() == 1);
 //                    require.using("An IOU transfer transaction should only create one output states.", tx.getOutputStates().size() == 1);
 //
@@ -109,16 +103,16 @@ public class RecordedTradeContract implements Contract {
 //                    List<PublicKey> arrayOfSigners = command.getSigners();
 //                    Set<PublicKey> setOfSigners = new HashSet<PublicKey>(arrayOfSigners);
 //                    require.using("The borrower, old lender and new lender only must sign an IOU transfer transaction", setOfSigners.equals(listOfParticipantPublicKeys) && setOfSigners.size() == 3);
-//                    return null;
-//
-//                });
-//
-//            } else if (commandData.equals(new Commands.NetTrades())) {
-//                requireThat(require -> {
-//                    System.out.println("In IOUContract.NetTrades() verification...");
-//                    return null;
-//                });
-//            }
+                    return null;
+
+                });
+            }
+            else if (commandData.equals(new Commands.NetTrades())) {
+                requireThat(require -> {
+                    System.out.println("In IOUContract.NetTrades() verification...");
+                    return null;
+                });
+            }
             else if (commandData.equals(new Commands.Settle())) {
                  //TODO put a check on valueDate in contract
 
@@ -179,10 +173,22 @@ public class RecordedTradeContract implements Contract {
                     require.using("Both lender and borrower must sign Trade settle transaction.", setOfSigners.equals(listOfParticipantPublicKeys));
 
                     return null;
-                })
-                ;
+                });
 
             }
+            else {
+                requireThat(require -> {
+                    require.using("Invalid command - Trade Contract verification failed", true);
+                    return null;
+                });
+            }
+        }
+
+        if (tx.commandsOfType(Commands.class).isEmpty()) {
+            requireThat(require -> {
+                require.using("Invalid command - Trade Contract verification failed", false);
+                return null;
+            });
         }
     }
 

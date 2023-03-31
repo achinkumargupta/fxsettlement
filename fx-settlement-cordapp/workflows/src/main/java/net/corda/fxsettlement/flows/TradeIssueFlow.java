@@ -111,7 +111,7 @@ public class TradeIssueFlow {
             final TransactionBuilder builder = new TransactionBuilder(notary);
 
             // Step 4. Add the iou as an output states, as well as a command to the transaction builder.
-            builder.addOutputState(state, RecordedTradeContract.IOU_CONTRACT_ID);
+            builder.addOutputState(state, RecordedTradeContract.TRADE_CONTRACT_ID);
             builder.addCommand(issueCommand);
 
             // Step 5. Verify and sign it with our KeyPair.
