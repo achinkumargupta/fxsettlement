@@ -57,13 +57,46 @@ sudo ufw enable
 sudo ufw status verbose
 
 
-/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7005,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=CreditSuisse -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/CreditSuisse/corda.jar
-
 /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7006,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=Notary -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/Notary/corda.jar
 
- /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7007,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=WellsFargo -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo/corda.jar
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7007,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=WellsFargo -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo/corda.jar
+
+
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7005,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=CreditSuisse -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/CreditSuisse/corda.jar
+
+
 
 /home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=JPMorgan -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan/corda.jar
 
 
 
+
+
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=JPMorgan -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan/corda.jar
+
+
+
+cd /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/Notary
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7006,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=Notary -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/Notary/corda.jar > logs/output  &
+sleep 10
+cd /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5007 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7007,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=WellsFargo -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/WellsFargo/corda.jar > logs/output &
+sleep 10
+cd /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/CreditSuisse
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7005,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=CreditSuisse -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/CreditSuisse/corda.jar > logs/output &
+sleep 10
+cd /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan
+/home/cloud_user/java_dir/jdk1.8.0_361/jre/bin/java -Dcapsule.jvm.args=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5008 -javaagent:drivers/jolokia-jvm-1.6.0-agent.jar=port=7008,logHandlerClass=net.corda.node.JolokiaSlf4jAdapter -Dname=JPMorgan -jar /home/cloud_user/fxsettlement/fx-settlement-cordapp/build/nodes/JPMorgan/corda.jar > logs/output &
+
+
+cat */logs/output | grep started
+
+
+sleep 180
+cd /home/cloud_user/fxsettlement/fx-settlement-cordapp
+mkdir -p clients/logs/
+./gradlew runPartyAServer > clients/logs/outputServerA &
+sleep 5
+./gradlew runPartyBServer  > clients/logs/outputServerB &
+sleep 5
+./gradlew runPartyCServer &
