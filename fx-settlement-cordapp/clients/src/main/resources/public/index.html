@@ -45,8 +45,48 @@ COMING WEEKS, WE'LL WRITE A TUTORIAL ON HOW BEST TO DO THIS.
         <button ng-click="demoApp.openCreateIOUModal()" type="button" class="btn btn-primary navbar-btn">Record Trade</button>
         <button ng-click="demoApp.openIssueCashModal()" type="button" class="btn btn-primary navbar-btn">Issue Cash</button>
         <button ng-click="demoApp.openNetTradesModal()" type="button" class="btn btn-primary navbar-btn">Net Trades</button>
+        <button id="button" type="button" class="btn btn-primary navbar-btn" data-toggle="collapse" data-target="#demo">
+            <span class="glyphicon glyphicon-collapse-down"></span>Live Netting View</button>
         <button ng-click="demoApp.refresh()" type="button" class="btn btn-default navbar-btn"><span
                 class="glyphicon glyphicon-refresh"></span></button>
+        <div id="demo" class="collapse">
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-10">
+<!--                    <div ng-show="!demoApp.net_cash_trades.length" class="panel panel-primary">-->
+<!--                        <div class="panel-heading">-->
+<!--                            <h3 class="panel-title">Recorded Trades</h3>-->
+<!--                        </div>-->
+<!--                        <div class="panel-body">There are no recorded trades currently. Use the "Record Trade" button to record a trade on Corda Ledger.</div>-->
+<!--                    </div>-->
+            <div ng-show="demoApp.net_cash_trades.length" class="panel">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Live Net Cash View (FX Trade's Value Date = Today)</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Counterparty</th>
+                            <th>Net Pay</th>
+                            <th>Net Receive</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="iou in demoApp.net_cash_trades">
+                            <td class="vert-align">{{iou.other}}</td>
+                            <td class="vert-align">{{iou.payOut}}</td>
+                            <td class="vert-align">{{iou.payIn}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+                </div>
+            </div>
+        </div>
+        <div>
     </div>
 </nav>
 

@@ -1,1 +1,1 @@
-net.corda.samples.obligation.contracts.NewSerializationWhitelist
+net.corda.fxsettlement.contracts.NewSerializationWhitelist

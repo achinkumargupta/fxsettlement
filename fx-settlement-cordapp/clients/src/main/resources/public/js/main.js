@@ -106,6 +106,9 @@ angular.module('demoAppModule', ['ui.bootstrap']).controller('DemoAppCtrl', func
         // Update the completed trades.
         $http.get(apiBaseURL + "settled-trades").then((response) => demoApp.settled_trades =
                     Object.keys(response.data).map((key) => response.data[key].state.data));
+
+        $http.get(apiBaseURL + "net-cash-balances").then((response) => demoApp.net_cash_trades =
+                            response.data);
     }
 
     demoApp.refresh();

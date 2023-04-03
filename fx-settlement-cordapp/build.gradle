@@ -97,7 +97,7 @@ dependencies {
 
 cordapp {
     info {
-        name "Obligation CorDapp"
+        name "FXsettlement CorDapp"
         vendor "Corda Open Source"
         targetPlatformVersion corda_platform_version
         minimumPlatformVersion corda_platform_version

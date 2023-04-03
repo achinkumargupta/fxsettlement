@@ -1,4 +1,4 @@
-# Obligation Cordap
+# FXsettlement Cordap
 
 This CorDapp is the complete implementation of our signature IOU (I-owe-you) demonstration.
 
