@@ -9,7 +9,8 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.RecordMetadata;
 //export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-// cd java-project/
+///usr/lib/jvm/java-17-openjdk-amd64/bin/java -cp build/classes/java/main:build/install/app/lib/* com.example.app.KafkaProducerExample 
+// cd java-project/app
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -23,9 +24,9 @@ public final class KafkaProducerExample {
         Logger logger = LoggerFactory.getLogger(KafkaProducerExample.class);
         logger.info("Current working directory: " + System.getProperty("user.dir"));
         String TOPIC_NAME = "truck_locations";
-        String TRUSTSTORE_PASSWORD = "Learning@wells";
-        String KEYSTORE_PASSWORD = "Learning@wells";
-        String KEY_PASSWORD = "Learning@wells";
+        String TRUSTSTORE_PASSWORD = "Learning";
+        String KEYSTORE_PASSWORD = TRUSTSTORE_PASSWORD;
+        String KEY_PASSWORD = TRUSTSTORE_PASSWORD;
         
         Properties properties = new Properties();
         properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-39fa367e-achinai-a995.b.aivencloud.com:25670");
@@ -56,7 +57,7 @@ public final class KafkaProducerExample {
                                 return;
                             }
                             else {
-                                logger.info("Message sent to topic: " + metadata.topic() + " partition: " + metadata.partition() + " offset: " + metadata.offset());
+                                logger.info("Message " + message + " sent to topic: " + metadata.topic() + " partition: " + metadata.partition() + " offset: " + metadata.offset());
                             }
                         }
                     });
@@ -81,7 +82,9 @@ public final class KafkaProducerExample {
             logger.info("Polling for messages...");
             ConsumerRecords<String, String> messages = consumer.poll(Duration.ofMillis(100));
             messages.forEach(message -> {
-              System.out.println("Got message using SSL: " + message.value());
+              System.out.println("Got message using SSL: " + message.value()
+            + " from partition: " + message.partition() + " offset: " + message.offset()
+            +   " with key: " + message.key());
             });
         }
     }
